@@ -38,6 +38,8 @@ public class SignInServiceImpl extends ServiceImpl<SignInMapper, SignIn> impleme
     @Override
     @Transactional
     public SignIn signIn(Long userId, Long activityId) {
+        activityService.refreshActivityStatuses();
+
         Activity activity = activityService.getById(activityId);
         if (activity == null) {
             throw new RuntimeException("活动不存在");

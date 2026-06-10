@@ -39,6 +39,8 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
 
     @Override
     public Page<Activity> getActivityPage(ActivityQueryDTO query) {
+        refreshActivityStatuses();
+
         Page<Activity> pageParam = new Page<>(query.getPage(), query.getSize());
         LambdaQueryWrapper<Activity> wrapper = new LambdaQueryWrapper<>();
 
@@ -84,12 +86,32 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
 
     @Override
     public Activity getActivityDetail(Long id) {
+        refreshActivityStatuses();
+
         Activity activity = this.getById(id);
         if (activity == null) {
             throw new RuntimeException("活动不存在");
         }
         fillRelatedInfo(java.util.Collections.singletonList(activity));
         return activity;
+    }
+
+    @Override
+    public void refreshActivityStatuses() {
+        LocalDateTime now = LocalDateTime.now();
+
+        this.lambdaUpdate()
+                .set(Activity::getStatus, "ended")
+                .in(Activity::getStatus, "approved", "ongoing")
+                .le(Activity::getEndTime, now)
+                .update();
+
+        this.lambdaUpdate()
+                .set(Activity::getStatus, "ongoing")
+                .eq(Activity::getStatus, "approved")
+                .le(Activity::getStartTime, now)
+                .gt(Activity::getEndTime, now)
+                .update();
     }
 
     @Override

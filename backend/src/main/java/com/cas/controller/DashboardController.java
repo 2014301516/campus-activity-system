@@ -40,6 +40,8 @@ public class DashboardController {
      */
     @GetMapping("/dashboard/stats")
     public Result<Map<String, Object>> getStats() {
+        activityService.refreshActivityStatuses();
+
         Map<String, Object> stats = new HashMap<>();
 
         // 总活动数
