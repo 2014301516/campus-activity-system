@@ -1,5 +1,6 @@
 package com.cas.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
@@ -29,9 +30,11 @@ public class ActivitySaveDTO {
     private String location;
 
     @NotNull(message = "请设置开始时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime startTime;
 
     @NotNull(message = "请设置结束时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endTime;
 
     @NotNull(message = "请设置最大报名人数")
