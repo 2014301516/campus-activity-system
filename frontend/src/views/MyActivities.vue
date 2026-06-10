@@ -83,7 +83,7 @@ onMounted(fetchData)
 
 <template>
   <div class="page-card">
-    <h2>📋 我的活动</h2>
+    <h2>📋 我的报名</h2>
 
     <div v-loading="loading">
       <el-empty v-if="!loading && registrations.length === 0" description="暂无报名记录" />
