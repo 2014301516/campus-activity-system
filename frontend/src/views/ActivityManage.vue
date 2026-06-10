@@ -96,7 +96,9 @@ async function handleSubmit() {
       }
       showDialog.value = false
       fetchActivities()
-    } catch (e) { /* ignore */ }
+    } catch (e) {
+      // 拦截器已显示错误消息
+    }
   })
 }
 
@@ -207,12 +209,12 @@ onMounted(() => {
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="开始时间" prop="startTime">
-              <el-date-picker v-model="form.startTime" type="datetime" placeholder="选择开始时间" style="width:100%" value-format="YYYY-MM-DDTHH:mm:ss" />
+              <el-date-picker v-model="form.startTime" type="datetime" placeholder="选择开始时间" style="width:100%" value-format="YYYY-MM-DD HH:mm:ss" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="结束时间" prop="endTime">
-              <el-date-picker v-model="form.endTime" type="datetime" placeholder="选择结束时间" style="width:100%" value-format="YYYY-MM-DDTHH:mm:ss" />
+              <el-date-picker v-model="form.endTime" type="datetime" placeholder="选择结束时间" style="width:100%" value-format="YYYY-MM-DD HH:mm:ss" />
             </el-form-item>
           </el-col>
         </el-row>
