@@ -6,6 +6,7 @@ import com.cas.entity.Registration;
 import com.cas.entity.Review;
 import com.cas.entity.User;
 import com.cas.mapper.ReviewMapper;
+import com.cas.service.ActivityService;
 import com.cas.service.RegistrationService;
 import com.cas.service.ReviewService;
 import com.cas.service.UserService;
@@ -28,8 +29,13 @@ public class ReviewServiceImpl extends ServiceImpl<ReviewMapper, Review> impleme
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private ActivityService activityService;
+
     @Override
     public Review submitReview(Long userId, Long activityId, Integer rating, String comment) {
+        activityService.refreshActivityStatuses();
+
         // 检查是否报名
         LambdaQueryWrapper<Registration> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Registration::getUserId, userId)

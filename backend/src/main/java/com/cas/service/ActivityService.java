@@ -22,6 +22,11 @@ public interface ActivityService extends IService<Activity> {
     Activity getActivityDetail(Long id);
 
     /**
+     * 按当前时间刷新活动状态
+     */
+    void refreshActivityStatuses();
+
+    /**
      * 创建活动（组织者/管理员）
      */
     Activity createActivity(ActivitySaveDTO dto, Long userId);

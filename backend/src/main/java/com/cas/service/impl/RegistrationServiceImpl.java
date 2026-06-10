@@ -33,6 +33,8 @@ public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Reg
     @Override
     @Transactional
     public Registration register(Long userId, Long activityId) {
+        activityService.refreshActivityStatuses();
+
         Activity activity = activityService.getById(activityId);
         if (activity == null) {
             throw new RuntimeException("活动不存在");
@@ -110,6 +112,8 @@ public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Reg
 
     @Override
     public List<Registration> getMyRegistrations(Long userId) {
+        activityService.refreshActivityStatuses();
+
         LambdaQueryWrapper<Registration> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Registration::getUserId, userId)
                .orderByDesc(Registration::getRegisteredAt);
@@ -122,6 +126,8 @@ public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Reg
 
     @Override
     public List<Registration> getActivityRegistrations(Long activityId) {
+        activityService.refreshActivityStatuses();
+
         LambdaQueryWrapper<Registration> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Registration::getActivityId, activityId)
                .eq(Registration::getStatus, "registered");
