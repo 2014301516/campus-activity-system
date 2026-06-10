@@ -2,7 +2,6 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { activityApi, categoryApi, noticeApi } from '@/api'
-import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const loading = ref(false)
@@ -11,14 +10,12 @@ const categories = ref([])
 const notices = ref([])
 const total = ref(0)
 
-// 查询条件
 const keyword = ref('')
 const categoryId = ref(null)
 const sort = ref('newest')
 const page = ref(1)
 const pageSize = ref(8)
 
-// 获取分类
 async function fetchCategories() {
   try {
     const res = await categoryApi.getList()
@@ -26,7 +23,6 @@ async function fetchCategories() {
   } catch (e) { /* ignore */ }
 }
 
-// 获取公告
 async function fetchNotices() {
   try {
     const res = await noticeApi.getList({ page: 1, size: 3 })
@@ -34,7 +30,6 @@ async function fetchNotices() {
   } catch (e) { /* ignore */ }
 }
 
-// 获取活动列表
 async function fetchActivities() {
   loading.value = true
   try {
@@ -54,42 +49,36 @@ async function fetchActivities() {
   }
 }
 
-// 搜索
 function handleSearch() {
   page.value = 1
   fetchActivities()
 }
 
-// 分类切换
 function handleCategoryChange(catId) {
   categoryId.value = catId
   page.value = 1
   fetchActivities()
 }
 
-// 分页
 function handlePageChange(p) {
   page.value = p
   fetchActivities()
 }
 
-// 去详情页
 function goDetail(id) {
   router.push(`/activity/${id}`)
 }
 
-// 格式化时间
 function formatTime(time) {
   if (!time) return ''
   return time.replace('T', ' ').substring(0, 16)
 }
 
-// 活动状态标签
 function statusTag(status) {
   const map = {
     draft: { type: 'info', text: '草稿' },
     pending: { type: 'warning', text: '待审核' },
-    approved: { type: 'success', text: '已通过' },
+    approved: { type: 'success', text: '报名中' },
     ongoing: { type: '', text: '进行中' },
     ended: { type: 'info', text: '已结束' },
     cancelled: { type: 'danger', text: '已取消' }
@@ -106,86 +95,113 @@ onMounted(() => {
 
 <template>
   <div class="home-page">
-    <!-- 公告栏 -->
-    <el-alert
-      v-for="notice in notices" :key="notice.id"
-      :title="notice.title"
-      type="info"
-      :description="notice.content?.length > 80 ? notice.content.substring(0, 80) + '...' : notice.content"
-      show-icon
-      :closable="false"
-      style="margin-bottom:8px"
-    />
 
-    <!-- 搜索栏 -->
-    <div class="page-card" style="margin-bottom:20px">
-      <el-row :gutter="12" align="middle">
-        <el-col :span="8">
-          <el-input v-model="keyword" placeholder="搜索活动名称..." clearable @clear="handleSearch" @keyup.enter="handleSearch">
-            <template #prefix><el-icon><Search /></el-icon></template>
-          </el-input>
-        </el-col>
-        <el-col :span="2">
-          <el-button type="primary" @click="handleSearch">
-            <el-icon><Search /></el-icon> 搜索
-          </el-button>
-        </el-col>
-        <el-col :span="3">
-          <el-select v-model="sort" placeholder="排序方式" @change="fetchActivities">
-            <el-option label="最新发布" value="newest" />
-            <el-option label="最受欢迎" value="popular" />
-          </el-select>
-        </el-col>
-      </el-row>
+    <!-- 搜索与筛选区 -->
+    <div class="filter-bar">
+      <!-- 搜索框 -->
+      <div class="search-box">
+        <el-input
+          v-model="keyword"
+          placeholder="搜索活动名称..."
+          clearable
+          size="large"
+          @clear="handleSearch"
+          @keyup.enter="handleSearch"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+          <template #append>
+            <el-button type="primary" @click="handleSearch">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+          </template>
+        </el-input>
+      </div>
+
+      <!-- 排序 -->
+      <el-select v-model="sort" size="large" style="width:140px" @change="fetchActivities">
+        <el-option label="最新发布" value="newest" />
+        <el-option label="最受欢迎" value="popular" />
+      </el-select>
     </div>
 
-    <!-- 分类筛选 -->
-    <div style="margin-bottom:20px">
-      <el-radio-group v-model="categoryId" @change="handleCategoryChange" size="default">
-        <el-radio-button :value="null">全部</el-radio-button>
-        <el-radio-button v-for="cat in categories" :key="cat.id" :value="cat.id">
-          {{ cat.name }}
-        </el-radio-button>
-      </el-radio-group>
+    <!-- 分类标签 -->
+    <div class="category-bar">
+      <el-button
+        :type="categoryId === null ? 'primary' : ''"
+        size="default"
+        @click="handleCategoryChange(null)"
+      >
+        全部
+      </el-button>
+      <el-button
+        v-for="cat in categories"
+        :key="cat.id"
+        :type="categoryId === cat.id ? 'primary' : ''"
+        size="default"
+        @click="handleCategoryChange(cat.id)"
+      >
+        {{ cat.name }}
+      </el-button>
+    </div>
+
+    <!-- 公告通知 -->
+    <div v-if="notices.length > 0" class="notice-bar">
+      <el-icon class="notice-icon"><Bell /></el-icon>
+      <div class="notice-scroll">
+        <span v-for="notice in notices" :key="notice.id" class="notice-item">
+          📢 {{ notice.title }}
+          <el-divider direction="vertical" />
+        </span>
+      </div>
     </div>
 
     <!-- 活动列表 -->
-    <div v-loading="loading">
+    <div v-loading="loading" class="activity-grid-wrap">
       <el-empty v-if="!loading && activityList.length === 0" description="暂无活动" />
 
-      <el-row :gutter="20" v-else>
-        <el-col :span="6" v-for="activity in activityList" :key="activity.id" style="margin-bottom:20px">
-          <el-card shadow="hover" class="activity-card" @click="goDetail(activity.id)">
-            <!-- 封面图 -->
-            <div class="card-cover">
-              <img v-if="activity.coverImage" :src="activity.coverImage" alt="" />
-              <div v-else class="cover-placeholder">
-                <el-icon :size="48"><Picture /></el-icon>
-              </div>
-              <el-tag :type="statusTag(activity.status).type" size="small" class="status-badge">
-                {{ statusTag(activity.status).text }}
-              </el-tag>
+      <div v-else class="activity-grid">
+        <div
+          v-for="activity in activityList"
+          :key="activity.id"
+          class="activity-card"
+          @click="goDetail(activity.id)"
+        >
+          <div class="card-cover">
+            <img
+              v-if="activity.coverImage"
+              :src="activity.coverImage"
+              alt=""
+            />
+            <div v-else class="cover-placeholder">
+              <el-icon :size="40"><Picture /></el-icon>
             </div>
+            <span class="card-badge" :class="'badge-' + activity.status">
+              {{ statusTag(activity.status).text }}
+            </span>
+          </div>
 
-            <div class="card-body">
-              <h3 class="card-title">{{ activity.title }}</h3>
-              <div class="card-meta">
-                <div><el-icon><Location /></el-icon> {{ activity.location }}</div>
-                <div><el-icon><Clock /></el-icon> {{ formatTime(activity.startTime) }}</div>
-              </div>
-              <div class="card-footer">
-                <el-tag size="small" type="info">{{ activity.categoryName }}</el-tag>
-                <span class="participant-count">
-                  <el-icon><User /></el-icon> {{ activity.currentParticipants }}/{{ activity.maxParticipants }}
-                </span>
-              </div>
+          <div class="card-info">
+            <h3 class="card-title">{{ activity.title }}</h3>
+            <p class="card-desc">{{ activity.description?.substring(0, 60) }}{{ activity.description?.length > 60 ? '...' : '' }}</p>
+            <div class="card-meta">
+              <span><el-icon><Location /></el-icon>{{ activity.location }}</span>
+              <span><el-icon><Clock /></el-icon>{{ formatTime(activity.startTime) }}</span>
             </div>
-          </el-card>
-        </el-col>
-      </el-row>
+            <div class="card-bottom">
+              <el-tag size="small">{{ activity.categoryName }}</el-tag>
+              <span class="participant-count">
+                <el-icon><User /></el-icon> {{ activity.currentParticipants }}/{{ activity.maxParticipants }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- 分页 -->
-      <div style="text-align:center;margin-top:20px" v-if="total > pageSize">
+      <div class="pagination-wrap" v-if="total > pageSize">
         <el-pagination
           background
           layout="prev, pager, next"
@@ -196,30 +212,119 @@ onMounted(() => {
         />
       </div>
     </div>
+
   </div>
 </template>
 
 <style scoped>
-.activity-card {
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  border-radius: 8px;
+.home-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ======== 搜索与筛选 ======== */
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.search-box {
+  flex: 1;
+  max-width: 520px;
+}
+
+/* ======== 分类标签 ======== */
+.category-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+/* ======== 公告通知 ======== */
+.notice-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ecf5ff;
+  border: 1px solid #d9ecff;
+  border-radius: 6px;
+  padding: 10px 16px;
+  margin-bottom: 20px;
   overflow: hidden;
 }
 
+.notice-icon {
+  font-size: 18px;
+  color: #409eff;
+  flex-shrink: 0;
+}
+
+.notice-scroll {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.notice-item {
+  font-size: 13px;
+  color: #606266;
+  margin-right: 8px;
+}
+
+/* ======== 活动卡片网格 ======== */
+.activity-grid-wrap {
+  min-height: 200px;
+}
+
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 1200px) {
+  .activity-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .activity-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .activity-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ======== 单个卡片 ======== */
+.activity-card {
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
 .activity-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  transform: translateY(-5px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.12);
 }
 
 .card-cover {
-  height: 140px;
-  background: #f5f7fa;
+  height: 150px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  margin: -20px -20px 16px;
   overflow: hidden;
 }
 
@@ -230,35 +335,64 @@ onMounted(() => {
 }
 
 .cover-placeholder {
-  color: #c0c4cc;
+  color: rgba(255,255,255,0.6);
 }
 
-.status-badge {
+.card-badge {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  right: 10px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #fff;
+}
+
+.badge-approved  { background: #67c23a; }
+.badge-ongoing   { background: #409eff; }
+.badge-pending   { background: #e6a23c; }
+.badge-draft     { background: #909399; }
+.badge-ended     { background: #909399; }
+.badge-cancelled { background: #f56c6c; }
+
+.card-info {
+  padding: 16px;
 }
 
 .card-title {
   font-size: 15px;
-  margin-bottom: 10px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 6px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.card-meta {
+.card-desc {
   font-size: 12px;
   color: #909399;
-  line-height: 22px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  min-height: 36px;
+}
+
+.card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #909399;
   margin-bottom: 12px;
 }
 
-.card-meta .el-icon {
-  vertical-align: middle;
+.card-meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.card-footer {
+.card-bottom {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -267,5 +401,14 @@ onMounted(() => {
 .participant-count {
   font-size: 13px;
   color: #409eff;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ======== 分页 ======== */
+.pagination-wrap {
+  text-align: center;
+  margin-top: 32px;
 }
 </style>
