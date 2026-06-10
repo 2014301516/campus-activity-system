@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,6 +28,10 @@ import java.util.stream.Collectors;
  */
 @Service
 public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> implements ActivityService {
+
+    private static final Duration STATUS_REFRESH_MIN_INTERVAL = Duration.ofSeconds(5);
+
+    private LocalDateTime lastStatusRefreshAt;
 
     @Autowired
     private UserService userService;
@@ -43,6 +48,8 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
 
         Page<Activity> pageParam = new Page<>(query.getPage(), query.getSize());
         LambdaQueryWrapper<Activity> wrapper = new LambdaQueryWrapper<>();
+        boolean includeAll = Boolean.TRUE.equals(query.getIncludeAll())
+                && "admin".equals(securityUtil.getCurrentUserRole());
 
         // 关键词搜索
         if (StringUtils.hasText(query.getKeyword())) {
@@ -65,7 +72,7 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         }
 
         // 默认只展示已通过和进行中的活动（首页）
-        if (!StringUtils.hasText(query.getStatus()) && query.getOrganizerId() == null) {
+        if (!includeAll && !StringUtils.hasText(query.getStatus()) && query.getOrganizerId() == null) {
             wrapper.in(Activity::getStatus, "approved", "ongoing");
         }
 
@@ -99,8 +106,12 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
     }
 
     @Override
-    public void refreshActivityStatuses() {
+    public synchronized void refreshActivityStatuses() {
         LocalDateTime now = LocalDateTime.now();
+        if (lastStatusRefreshAt != null
+                && Duration.between(lastStatusRefreshAt, now).compareTo(STATUS_REFRESH_MIN_INTERVAL) < 0) {
+            return;
+        }
 
         this.lambdaUpdate()
                 .set(Activity::getStatus, "ended")
@@ -114,6 +125,8 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
                 .le(Activity::getStartTime, now)
                 .gt(Activity::getEndTime, now)
                 .update();
+
+        lastStatusRefreshAt = now;
     }
 
     @Override

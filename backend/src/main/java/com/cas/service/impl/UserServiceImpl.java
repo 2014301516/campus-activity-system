@@ -117,10 +117,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public void updateStatus(Long userId, Integer status) {
+    public void updateStatus(Long operatorId, Long userId, Integer status) {
+        if (status == null || (status != 0 && status != 1)) {
+            throw new RuntimeException("用户状态无效");
+        }
         User user = this.getById(userId);
         if (user == null) {
             throw new RuntimeException("用户不存在");
+        }
+        if (status == 0 && operatorId.equals(userId)) {
+            throw new RuntimeException("不能禁用当前登录的管理员账号");
+        }
+        if (status == 0 && "admin".equals(user.getRole()) && user.getStatus() == 1) {
+            long activeAdminCount = this.lambdaQuery()
+                    .eq(User::getRole, "admin")
+                    .eq(User::getStatus, 1)
+                    .count();
+            if (activeAdminCount <= 1) {
+                throw new RuntimeException("至少保留一个可用的管理员账号");
+            }
         }
         user.setStatus(status);
         this.updateById(user);
