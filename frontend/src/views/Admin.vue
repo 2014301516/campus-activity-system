@@ -62,7 +62,24 @@ async function handleAudit(id, status) {
     await adminApi.auditActivity(id, status)
     ElMessage.success(status === 'approved' ? '已通过审核' : '已驳回')
     fetchPendingActivities()
+    fetchAllActivities()
   } catch (e) { /* ignore */ }
+}
+
+// ==================== 全部活动 ====================
+const allActivities = ref([])
+const allActivityLoading = ref(false)
+const allActivityStatus = ref('')
+
+async function fetchAllActivities() {
+  allActivityLoading.value = true
+  try {
+    const params = { size: 50 }
+    if (allActivityStatus.value) params.status = allActivityStatus.value
+    const res = await activityApi.getList(params)
+    allActivities.value = res.data.records || []
+  } catch (e) { /* ignore */ }
+  finally { allActivityLoading.value = false }
 }
 
 // ==================== 分类管理 ====================
@@ -144,6 +161,7 @@ onMounted(() => {
   fetchStats()
   fetchUsers()
   fetchPendingActivities()
+  fetchAllActivities()
   fetchCategories()
   fetchNotices()
 })
@@ -270,6 +288,38 @@ onMounted(() => {
             </el-table-column>
           </el-table>
         </div>
+      </el-tab-pane>
+
+      <!-- 全部活动 -->
+      <el-tab-pane label="全部活动" name="allActivities">
+        <div style="margin-bottom:12px">
+          <el-select v-model="allActivityStatus" placeholder="按状态筛选" clearable style="width:180px" @change="fetchAllActivities">
+            <el-option label="草稿" value="draft" />
+            <el-option label="待审核" value="pending" />
+            <el-option label="已通过" value="approved" />
+            <el-option label="进行中" value="ongoing" />
+            <el-option label="已结束" value="ended" />
+          </el-select>
+        </div>
+        <el-table :data="allActivities" stripe v-loading="allActivityLoading">
+          <el-table-column label="ID" prop="id" width="60" />
+          <el-table-column label="标题" prop="title" min-width="180" />
+          <el-table-column label="分类" prop="categoryName" width="100" />
+          <el-table-column label="组织者" prop="organizerName" width="100" />
+          <el-table-column label="状态" width="90">
+            <template #default="{ row }">
+              <el-tag :type="row.status==='approved'?'success':row.status==='pending'?'warning':row.status==='draft'?'info':''" size="small">
+                {{ {draft:'草稿',pending:'待审核',approved:'已通过',ongoing:'进行中',ended:'已结束',cancelled:'已取消'}[row.status] }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="报名" width="80">
+            <template #default="{ row }">{{ row.currentParticipants }}/{{ row.maxParticipants }}</template>
+          </el-table-column>
+          <el-table-column label="时间" width="140">
+            <template #default="{ row }">{{ formatTime(row.startTime) }}</template>
+          </el-table-column>
+        </el-table>
       </el-tab-pane>
 
       <!-- 分类管理 -->
