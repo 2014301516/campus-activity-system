@@ -64,12 +64,6 @@ const roleLabel = {
   admin: '管理员'
 }
 
-const roleIntro = {
-  student: '这里展示你的基础资料和参与活动情况，方便答辩时切换到个人视角进行说明。',
-  organizer: '这里可以快速查看你的个人资料和活动发布成果，作为组织者演示的补充页。',
-  admin: '这里保留个人资料，同时可快速看到平台级数据概览，方便切换后台管理视角。'
-}
-
 const roleTagType = computed(() => {
   return authStore.role === 'admin' ? 'danger' : authStore.role === 'organizer' ? 'warning' : 'info'
 })
@@ -89,16 +83,7 @@ async function fetchProfileStats() {
     }
 
     if (authStore.role === 'organizer') {
-      const res = await activityApi.getList({
-        size: 100,
-        organizerId: authStore.userInfo?.userId
-      })
-      const activities = res.data.records || []
-      profileStats.value = [
-        { label: '我的活动', value: activities.length, sub: '当前账号创建的活动数量' },
-        { label: '待审核', value: activities.filter(item => item.status === 'pending').length, sub: '等待管理员审核' },
-        { label: '进行中', value: activities.filter(item => item.status === 'ongoing').length, sub: '当前进行中的活动' }
-      ]
+      profileStats.value = []
       return
     }
 
@@ -127,14 +112,13 @@ onMounted(() => {
     <div class="profile-header">
       <div>
         <h2>👤 个人中心</h2>
-        <p>{{ roleIntro[authStore.role] }}</p>
       </div>
       <el-tag :type="roleTagType" size="large">
         {{ roleLabel[authStore.role] || authStore.role }}
       </el-tag>
     </div>
 
-    <div v-loading="statsLoading" class="profile-stats">
+    <div v-if="profileStats.length > 0" v-loading="statsLoading" class="profile-stats">
       <div v-for="card in profileStats" :key="card.label" class="profile-stat-card">
         <div class="profile-stat-label">{{ card.label }}</div>
         <div class="profile-stat-value">{{ card.value }}</div>
@@ -197,7 +181,6 @@ onMounted(() => {
   color: #909399;
   line-height: 1.7;
 }
-
 .profile-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
