@@ -13,6 +13,7 @@ import com.cas.mapper.ActivityMapper;
 import com.cas.service.ActivityService;
 import com.cas.service.CategoryService;
 import com.cas.service.UserService;
+import com.cas.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -32,6 +33,9 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
 
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private SecurityUtil securityUtil;
 
     @Override
     public Page<Activity> getActivityPage(ActivityQueryDTO query) {
@@ -106,8 +110,7 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         if (activity == null) {
             throw new RuntimeException("活动不存在");
         }
-        // 只能修改自己发布的活动
-        if (!activity.getOrganizerId().equals(userId)) {
+        if (!canManageActivity(activity, userId)) {
             throw new RuntimeException("无权修改此活动");
         }
         // 已结束的活动不能修改
@@ -115,7 +118,12 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
             throw new RuntimeException("已结束的活动不能修改");
         }
 
+        String currentStatus = activity.getStatus();
         BeanUtil.copyProperties(dto, activity);
+        // 被驳回的活动在修改后重新进入待审核，便于重新演示审核流程
+        if ("rejected".equals(currentStatus)) {
+            activity.setStatus("pending");
+        }
         this.updateById(activity);
         return activity;
     }
@@ -126,7 +134,7 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         if (activity == null) {
             throw new RuntimeException("活动不存在");
         }
-        if (!activity.getOrganizerId().equals(userId)) {
+        if (!canManageActivity(activity, userId)) {
             throw new RuntimeException("无权删除此活动");
         }
         this.removeById(id);
@@ -134,7 +142,7 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
 
     @Override
     public void auditActivity(Long id, String status) {
-        if (!"approved".equals(status) && !"pending".equals(status)) {
+        if (!"approved".equals(status) && !"rejected".equals(status)) {
             throw new RuntimeException("审核状态无效");
         }
         Activity activity = this.getById(id);
@@ -146,6 +154,11 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         }
         activity.setStatus(status);
         this.updateById(activity);
+    }
+
+    private boolean canManageActivity(Activity activity, Long userId) {
+        String role = securityUtil.getCurrentUserRole();
+        return "admin".equals(role) || activity.getOrganizerId().equals(userId);
     }
 
     /**

@@ -61,7 +61,7 @@ CREATE TABLE activities (
     end_time             DATETIME     NOT NULL COMMENT '结束时间',
     max_participants     INT          NOT NULL DEFAULT 0 COMMENT '最大报名人数',
     current_participants INT          NOT NULL DEFAULT 0 COMMENT '当前报名人数',
-    status               VARCHAR(20)  NOT NULL DEFAULT 'draft' COMMENT '状态: draft/pending/approved/ongoing/ended/cancelled',
+    status               VARCHAR(20)  NOT NULL DEFAULT 'draft' COMMENT '状态: draft/pending/approved/rejected/ongoing/ended/cancelled',
     created_at           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (id),

@@ -64,7 +64,7 @@ public class DashboardController {
 
         // 各状态活动数（含全部状态）
         Map<String, Long> statusStats = new HashMap<>();
-        for (String status : new String[]{"draft", "pending", "approved", "ongoing", "ended", "cancelled"}) {
+        for (String status : new String[]{"draft", "pending", "approved", "rejected", "ongoing", "ended", "cancelled"}) {
             statusStats.put(status, activityService.lambdaQuery()
                     .eq(Activity::getStatus, status).count());
         }
