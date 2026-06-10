@@ -41,5 +41,5 @@ public interface UserService extends IService<User> {
     /**
      * 修改用户状态（管理员）
      */
-    void updateStatus(Long userId, Integer status);
+    void updateStatus(Long operatorId, Long userId, Integer status);
 }

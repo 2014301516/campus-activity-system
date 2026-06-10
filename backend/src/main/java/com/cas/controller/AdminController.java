@@ -57,7 +57,8 @@ public class AdminController {
      */
     @PutMapping("/users/{id}/status")
     public Result<?> updateUserStatus(@PathVariable Long id, @RequestBody Map<String, Integer> body) {
-        userService.updateStatus(id, body.get("status"));
+        Long operatorId = securityUtil.getCurrentUserId();
+        userService.updateStatus(operatorId, id, body.get("status"));
         return Result.success("状态更新成功");
     }
 

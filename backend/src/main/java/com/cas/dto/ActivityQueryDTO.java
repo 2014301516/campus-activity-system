@@ -15,4 +15,5 @@ public class ActivityQueryDTO {
     private String status;        // 状态筛选
     private Long organizerId;     // 组织者筛选（我的活动）
     private String sort = "newest"; // newest / popular / startTimeAsc
+    private Boolean includeAll = false; // 管理员查看全部活动
 }

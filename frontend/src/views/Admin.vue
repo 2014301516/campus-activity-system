@@ -1,8 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { adminApi, activityApi, categoryApi, noticeApi, dashboardApi } from '@/api'
+import { useAuthStore } from '@/store/auth'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
+const authStore = useAuthStore()
 const activeTab = ref('dashboard')
 
 // ==================== 数据统计 ====================
@@ -70,16 +72,34 @@ async function handleAudit(id, status) {
 const allActivities = ref([])
 const allActivityLoading = ref(false)
 const allActivityStatus = ref('')
+const allActivityPage = ref(1)
+const allActivityPageSize = ref(10)
+const allActivityTotal = ref(0)
 
 async function fetchAllActivities() {
   allActivityLoading.value = true
   try {
-    const params = { size: 50 }
+    const params = {
+      page: allActivityPage.value,
+      size: allActivityPageSize.value,
+      includeAll: true
+    }
     if (allActivityStatus.value) params.status = allActivityStatus.value
     const res = await activityApi.getList(params)
     allActivities.value = res.data.records || []
+    allActivityTotal.value = res.data.total || 0
   } catch (e) { /* ignore */ }
   finally { allActivityLoading.value = false }
+}
+
+function handleAllActivityStatusChange() {
+  allActivityPage.value = 1
+  fetchAllActivities()
+}
+
+function handleAllActivityPageChange(page) {
+  allActivityPage.value = page
+  fetchAllActivities()
 }
 
 // ==================== 分类管理 ====================
@@ -110,7 +130,7 @@ async function addCategory() {
 
 async function deleteCategory(id) {
   try {
-    await ElMessageBox.confirm('确定删除该分类吗？', '确认', { type: 'warning' })
+    await ElMessageBox.confirm('确定删除该分类吗？如果已有活动正在使用该分类，将无法删除。', '确认', { type: 'warning' })
     await adminApi.deleteCategory(id)
     ElMessage.success('删除成功')
     fetchCategories()
@@ -284,6 +304,7 @@ onMounted(() => {
           <el-table-column label="操作" width="100">
             <template #default="{ row }">
               <el-button size="small" :type="row.status === 1 ? 'danger' : 'success'"
+                         :disabled="row.status === 1 && row.id === authStore.userInfo?.userId"
                          @click="toggleUserStatus(row)">
                 {{ row.status === 1 ? '禁用' : '启用' }}
               </el-button>
@@ -319,13 +340,14 @@ onMounted(() => {
       <!-- 全部活动 -->
       <el-tab-pane label="全部活动" name="allActivities">
         <div style="margin-bottom:12px">
-          <el-select v-model="allActivityStatus" placeholder="按状态筛选" clearable style="width:180px" @change="fetchAllActivities">
+          <el-select v-model="allActivityStatus" placeholder="按状态筛选" clearable style="width:180px" @change="handleAllActivityStatusChange" @clear="handleAllActivityStatusChange">
             <el-option label="草稿" value="draft" />
             <el-option label="待审核" value="pending" />
             <el-option label="已通过" value="approved" />
             <el-option label="已驳回" value="rejected" />
             <el-option label="进行中" value="ongoing" />
             <el-option label="已结束" value="ended" />
+            <el-option label="已取消" value="cancelled" />
           </el-select>
         </div>
         <el-table :data="allActivities" stripe v-loading="allActivityLoading">
@@ -347,6 +369,15 @@ onMounted(() => {
             <template #default="{ row }">{{ formatTime(row.startTime) }}</template>
           </el-table-column>
         </el-table>
+        <el-pagination
+          v-if="allActivityTotal > allActivityPageSize"
+          :total="allActivityTotal"
+          :page-size="allActivityPageSize"
+          :current-page="allActivityPage"
+          @current-change="handleAllActivityPageChange"
+          layout="prev, pager, next"
+          style="margin-top:16px;text-align:center"
+        />
       </el-tab-pane>
 
       <!-- 分类管理 -->
