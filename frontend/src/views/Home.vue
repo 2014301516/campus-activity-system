@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { activityApi, categoryApi, noticeApi, dashboardApi } from '@/api'
 
@@ -9,9 +9,10 @@ const activityList = ref([])
 const categories = ref([])
 const notices = ref([])
 const featuredActivities = ref([])
-const popularActivities = ref([])
 const upcomingActivities = ref([])
+const freshActivities = ref([])
 const total = ref(0)
+const activitySquareRef = ref(null)
 const stats = ref({
   totalActivities: 0,
   ongoingActivities: 0,
@@ -71,27 +72,53 @@ async function fetchFeaturedActivities() {
   } catch (e) { /* ignore */ }
 }
 
-async function fetchPopularActivities() {
+async function fetchUpcomingActivities() {
   try {
-    const res = await activityApi.getList({ page: 1, size: 4, sort: 'popular' })
-    popularActivities.value = res.data.records || []
+    const res = await activityApi.getList({ page: 1, size: 20, sort: 'startTimeAsc' })
+    const now = new Date()
+    upcomingActivities.value = (res.data.records || [])
+      .filter(item => parseActivityTime(item.startTime) > now)
+      .slice(0, 4)
   } catch (e) { /* ignore */ }
 }
 
-async function fetchUpcomingActivities() {
+async function fetchFreshActivities() {
   try {
     const res = await activityApi.getList({ page: 1, size: 12, sort: 'newest' })
-    const now = new Date()
-    upcomingActivities.value = (res.data.records || [])
-      .filter(item => new Date(item.startTime.replace(' ', 'T')) > now)
-      .sort((a, b) => new Date(a.startTime.replace(' ', 'T')) - new Date(b.startTime.replace(' ', 'T')))
-      .slice(0, 4)
+    const records = res.data.records || []
+    const featuredIds = new Set(featuredActivities.value.map(item => item.id))
+    const excludedIds = new Set([
+      ...featuredActivities.value.map(item => item.id),
+      ...upcomingActivities.value.map(item => item.id)
+    ])
+
+    const deduplicated = records.filter(item => !excludedIds.has(item.id))
+    const fallback = records.filter(item => !featuredIds.has(item.id))
+    freshActivities.value = (deduplicated.length > 0 ? deduplicated : fallback).slice(0, 4)
   } catch (e) { /* ignore */ }
 }
 
 function handleSearch() {
   page.value = 1
   fetchActivities()
+}
+
+async function handleBrowseAll() {
+  keyword.value = ''
+  categoryId.value = null
+  sort.value = 'newest'
+  page.value = 1
+  await fetchActivities()
+  await nextTick()
+  activitySquareRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+async function handleViewPopular() {
+  sort.value = 'popular'
+  page.value = 1
+  await fetchActivities()
+  await nextTick()
+  activitySquareRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 function handleCategoryChange(catId) {
@@ -107,6 +134,11 @@ function handlePageChange(p) {
 
 function goDetail(id) {
   router.push(`/activity/${id}`)
+}
+
+function parseActivityTime(time) {
+  if (!time) return null
+  return new Date(time.replace(' ', 'T'))
 }
 
 function formatTime(time) {
@@ -134,7 +166,7 @@ function statusTag(status) {
 
 function countdownText(time) {
   if (!time) return '待定'
-  const target = new Date(time.replace(' ', 'T'))
+  const target = parseActivityTime(time)
   const now = new Date()
   const diff = target - now
   if (diff <= 0) return '即将开始'
@@ -148,14 +180,20 @@ function categoryCountLabel() {
   return `${categories.value.length} 个分类`
 }
 
+async function initHomePage() {
+  await Promise.all([
+    fetchCategories(),
+    fetchNotices(),
+    fetchStats(),
+    fetchFeaturedActivities(),
+    fetchUpcomingActivities(),
+    fetchActivities()
+  ])
+  await fetchFreshActivities()
+}
+
 onMounted(() => {
-  fetchCategories()
-  fetchNotices()
-  fetchStats()
-  fetchFeaturedActivities()
-  fetchPopularActivities()
-  fetchUpcomingActivities()
-  fetchActivities()
+  initHomePage()
 })
 </script>
 
@@ -170,8 +208,8 @@ onMounted(() => {
             在这里快速查看讲座、比赛、志愿服务和社团活动，及时完成报名、签到和评价。
           </p>
           <div class="hero-actions">
-            <el-button type="primary" size="large" @click="handleCategoryChange(null)">浏览全部活动</el-button>
-            <el-button size="large" @click="sort = 'popular'; fetchActivities()">查看热门活动</el-button>
+            <el-button type="primary" size="large" @click="handleBrowseAll">浏览全部活动</el-button>
+            <el-button size="large" @click="handleViewPopular">查看热门活动</el-button>
           </div>
         </div>
         <div class="hero-highlight" v-if="featuredActivities.length > 0" @click="goDetail(featuredActivities[0].id)">
@@ -204,8 +242,19 @@ onMounted(() => {
           class="hero-mini-card"
           @click="goDetail(activity.id)"
         >
-          <div class="hero-mini-title">{{ activity.title }}</div>
-          <div class="hero-mini-meta">{{ formatDate(activity.startTime) }} · {{ activity.categoryName }}</div>
+          <div class="hero-mini-cover">
+            <img v-if="activity.coverImage" :src="activity.coverImage" alt="" />
+            <div v-else class="cover-placeholder">
+              <el-icon :size="28"><Picture /></el-icon>
+            </div>
+            <span class="card-badge" :class="'badge-' + activity.status">
+              {{ statusTag(activity.status).text }}
+            </span>
+          </div>
+          <div class="hero-mini-body">
+            <div class="hero-mini-title">{{ activity.title }}</div>
+            <div class="hero-mini-meta">{{ formatDate(activity.startTime) }} · {{ activity.categoryName }}</div>
+          </div>
         </div>
       </div>
     </section>
@@ -248,33 +297,6 @@ onMounted(() => {
       </div>
     </section>
 
-    <section class="category-panel">
-      <div class="section-head">
-        <div>
-          <h3>活动分类</h3>
-          <p>快速切换你关心的活动类型</p>
-        </div>
-      </div>
-      <div class="category-bar">
-        <el-button
-          :type="categoryId === null ? 'primary' : ''"
-          size="default"
-          @click="handleCategoryChange(null)"
-        >
-          全部
-        </el-button>
-        <el-button
-          v-for="cat in categories"
-          :key="cat.id"
-          :type="categoryId === cat.id ? 'primary' : ''"
-          size="default"
-          @click="handleCategoryChange(cat.id)"
-        >
-          {{ cat.name }}
-        </el-button>
-      </div>
-    </section>
-
     <section class="highlight-grid">
       <div class="highlight-column">
         <div class="section-head">
@@ -298,32 +320,51 @@ onMounted(() => {
       <div class="highlight-column">
         <div class="section-head">
           <div>
-            <h3>热门活动</h3>
-            <p>按当前报名热度快速筛选</p>
+            <h3>新上架活动</h3>
+            <p>优先展示最近发布且未在上方重复出现的活动</p>
           </div>
         </div>
         <div class="compact-list">
-          <div v-for="activity in popularActivities" :key="activity.id" class="compact-card" @click="goDetail(activity.id)">
+          <div v-for="activity in freshActivities" :key="activity.id" class="compact-card" @click="goDetail(activity.id)">
             <div>
               <div class="compact-title">{{ activity.title }}</div>
-              <div class="compact-meta">{{ activity.categoryName }} · {{ formatDate(activity.startTime) }}</div>
+              <div class="compact-meta">{{ formatDate(activity.createdAt || activity.startTime) }} 发布 · {{ activity.categoryName }}</div>
             </div>
             <div class="hot-badge">
-              <el-icon><User /></el-icon>
-              {{ activity.currentParticipants }}/{{ activity.maxParticipants }}
+              <el-icon><Clock /></el-icon>
+              {{ formatDate(activity.startTime) }}
             </div>
           </div>
-          <el-empty v-if="popularActivities.length === 0" description="暂无热门活动" />
+          <el-empty v-if="freshActivities.length === 0" description="暂无新上架活动" />
         </div>
       </div>
     </section>
 
-    <section class="filter-panel">
+    <section ref="activitySquareRef" class="filter-panel">
       <div class="section-head">
         <div>
           <h3>活动广场</h3>
-          <p>按关键词、分类和热度筛选所有可报名活动</p>
+          <p>按分类、关键词和热度快速筛选所有可报名活动</p>
         </div>
+      </div>
+
+      <div class="category-bar category-inline">
+        <el-button
+          :type="categoryId === null ? 'primary' : ''"
+          size="default"
+          @click="handleCategoryChange(null)"
+        >
+          全部
+        </el-button>
+        <el-button
+          v-for="cat in categories"
+          :key="cat.id"
+          :type="categoryId === cat.id ? 'primary' : ''"
+          size="default"
+          @click="handleCategoryChange(cat.id)"
+        >
+          {{ cat.name }}
+        </el-button>
       </div>
 
       <div class="filter-bar">
@@ -529,10 +570,27 @@ onMounted(() => {
 .hero-mini-card {
   background: #fff;
   border-radius: 16px;
-  padding: 20px;
+  overflow: hidden;
   cursor: pointer;
   border: 1px solid #ebeef5;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.hero-mini-cover {
+  position: relative;
+  height: 124px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  overflow: hidden;
+}
+
+.hero-mini-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-mini-body {
+  padding: 16px 18px;
 }
 
 .hero-mini-title {
@@ -600,7 +658,6 @@ onMounted(() => {
 }
 
 .notice-panel,
-.category-panel,
 .filter-panel {
   background: #fff;
   border-radius: 16px;
@@ -638,6 +695,10 @@ onMounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.category-inline {
+  margin-bottom: 16px;
 }
 
 .highlight-grid {
