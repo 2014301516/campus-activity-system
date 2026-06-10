@@ -33,4 +33,16 @@ public class Registration {
     /** 活动标题（非数据库字段） */
     @TableField(exist = false)
     private String activityTitle;
+
+    /** 活动开始时间（非数据库字段） */
+    @TableField(exist = false)
+    private LocalDateTime activityStartTime;
+
+    /** 活动结束时间（非数据库字段） */
+    @TableField(exist = false)
+    private LocalDateTime activityEndTime;
+
+    /** 活动状态（非数据库字段） */
+    @TableField(exist = false)
+    private String activityStatus;
 }
