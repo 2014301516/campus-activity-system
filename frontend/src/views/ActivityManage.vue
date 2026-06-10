@@ -221,6 +221,12 @@ onMounted(() => {
         <el-form-item label="描述" prop="description">
           <el-input v-model="form.description" type="textarea" :rows="4" placeholder="活动详细描述" />
         </el-form-item>
+        <el-form-item label="封面图">
+          <el-input v-model="form.coverImage" placeholder="请输入图片 URL，例如 https://example.com/cover.jpg" clearable />
+          <div v-if="form.coverImage" style="margin-top:12px">
+            <el-image :src="form.coverImage" fit="cover" style="width:220px;height:120px;border-radius:6px" />
+          </div>
+        </el-form-item>
         <el-form-item label="地点" prop="location">
           <el-input v-model="form.location" placeholder="活动地点" />
         </el-form-item>
