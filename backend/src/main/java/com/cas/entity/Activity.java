@@ -27,7 +27,7 @@ public class Activity {
     private LocalDateTime endTime;
     private Integer maxParticipants;
     private Integer currentParticipants;
-    private String status;   // draft / pending / approved / ongoing / ended / cancelled
+    private String status;   // draft / pending / approved / rejected / ongoing / ended / cancelled
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
