@@ -72,6 +72,8 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         // 排序
         if ("popular".equals(query.getSort())) {
             wrapper.orderByDesc(Activity::getCurrentParticipants);
+        } else if ("startTimeAsc".equals(query.getSort())) {
+            wrapper.orderByAsc(Activity::getStartTime);
         } else {
             wrapper.orderByDesc(Activity::getCreatedAt);
         }
