@@ -157,7 +157,7 @@ public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Reg
                 r.setActivityEndTime(activity.getEndTime());
                 r.setActivityStatus(activity.getStatus());
             } else {
-                r.setActivityTitle("未知");
+                r.setActivityTitle("活动已删除");
             }
         }
     }
