@@ -1,8 +1,15 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { adminApi, activityApi, categoryApi, noticeApi, dashboardApi } from '@/api'
 import { useAuthStore } from '@/store/auth'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import VChart from 'vue-echarts'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { PieChart } from 'echarts/charts'
+import { LegendComponent, TooltipComponent } from 'echarts/components'
+
+use([CanvasRenderer, PieChart, LegendComponent, TooltipComponent])
 
 const authStore = useAuthStore()
 const activeTab = ref('dashboard')
@@ -63,6 +70,7 @@ async function handleAudit(id, status) {
   try {
     await adminApi.auditActivity(id, status)
     ElMessage.success(status === 'approved' ? '已通过审核' : '已驳回')
+    fetchStats()
     fetchPendingActivities()
     fetchAllActivities()
   } catch (e) { /* ignore */ }
@@ -190,6 +198,56 @@ function statusLabel(status) {
   return map[status] || status
 }
 
+const statusColorMap = {
+  draft: '#909399',
+  pending: '#e6a23c',
+  approved: '#67c23a',
+  rejected: '#f56c6c',
+  ongoing: '#409eff',
+  ended: '#c0c4cc',
+  cancelled: '#a8abb2'
+}
+
+const statusChartOption = computed(() => {
+  const statusStats = stats.value?.statusStats || {}
+  const data = Object.entries(statusStats)
+    .filter(([, count]) => Number(count) > 0)
+    .map(([status, count]) => ({
+      value: count,
+      name: statusLabel(status),
+      itemStyle: { color: statusColorMap[status] || '#409eff' }
+    }))
+
+  return {
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c} 个 ({d}%)'
+    },
+    legend: {
+      bottom: 0,
+      left: 'center',
+      itemWidth: 10,
+      itemHeight: 10
+    },
+    series: [
+      {
+        type: 'pie',
+        radius: ['45%', '72%'],
+        center: ['50%', '45%'],
+        avoidLabelOverlap: true,
+        label: {
+          formatter: '{b}\n{c} 个'
+        },
+        labelLine: {
+          length: 12,
+          length2: 10
+        },
+        data
+      }
+    ]
+  }
+})
+
 function statusTagType(status) {
   const map = {
     approved: 'success',
@@ -261,12 +319,17 @@ onMounted(() => {
 
           <!-- 状态分布 -->
           <h4 style="margin:20px 0 12px">活动状态分布</h4>
-          <div style="display:flex;gap:24px">
-            <div v-for="(count, status) in (stats?.statusStats || {})" :key="status" style="flex:1">
-              <div style="display:flex;align-items:center;gap:8px">
-                <span style="color:#606266;min-width:60px">{{ statusLabel(status) }}</span>
-                <el-progress :percentage="stats?.totalActivities ? Math.round(count / stats.totalActivities * 100) : 0" :color="'#409eff'" style="flex:1" />
-                <span style="color:#909399;min-width:30px">{{ count }}</span>
+          <div class="status-chart-card">
+            <v-chart
+              :option="statusChartOption"
+              :autoresize="true"
+              class="status-chart"
+            />
+            <div class="status-summary">
+              <div v-for="(count, status) in (stats?.statusStats || {})" :key="status" class="status-summary-item">
+                <span class="status-dot" :style="{ backgroundColor: statusColorMap[status] || '#409eff' }"></span>
+                <span class="status-name">{{ statusLabel(status) }}</span>
+                <span class="status-count">{{ count }}</span>
               </div>
             </div>
           </div>
@@ -442,6 +505,53 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.status-chart-card {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(220px, 280px);
+  gap: 24px;
+  align-items: center;
+  padding: 20px 24px;
+  background: #f8fafc;
+  border: 1px solid #ebeef5;
+  border-radius: 14px;
+}
+
+.status-chart {
+  height: 340px;
+}
+
+.status-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.status-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #fff;
+  border-radius: 10px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-name {
+  flex: 1;
+  color: #606266;
+}
+
+.status-count {
+  font-weight: 600;
+  color: #303133;
+}
+
 .stat-card {
   border-radius: 10px;
   padding: 24px;
@@ -461,4 +571,10 @@ onMounted(() => {
 .stat-green { background: linear-gradient(135deg, #67c23a, #529b2e); }
 .stat-orange { background: linear-gradient(135deg, #e6a23c, #cf9236); }
 .stat-purple { background: linear-gradient(135deg, #a855f7, #9333ea); }
+
+@media (max-width: 900px) {
+  .status-chart-card {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
