@@ -27,6 +27,7 @@ public class RegistrationController {
      */
     @PostMapping("/activity/{activityId}/register")
     public Result<Registration> register(@PathVariable Long activityId) {
+        securityUtil.requireStudent();
         Long userId = securityUtil.getCurrentUserId();
         Registration registration = registrationService.register(userId, activityId);
         return Result.success("报名成功", registration);
@@ -37,6 +38,7 @@ public class RegistrationController {
      */
     @DeleteMapping("/activity/{activityId}/register")
     public Result<?> cancelRegister(@PathVariable Long activityId) {
+        securityUtil.requireStudent();
         Long userId = securityUtil.getCurrentUserId();
         registrationService.cancelRegister(userId, activityId);
         return Result.success("已取消报名");
@@ -47,6 +49,7 @@ public class RegistrationController {
      */
     @GetMapping("/my-registrations")
     public Result<List<Registration>> myRegistrations() {
+        securityUtil.requireStudent();
         Long userId = securityUtil.getCurrentUserId();
         return Result.success(registrationService.getMyRegistrations(userId));
     }

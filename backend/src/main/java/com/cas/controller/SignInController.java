@@ -28,6 +28,7 @@ public class SignInController {
      */
     @PostMapping("/sign-in")
     public Result<SignIn> signIn(@RequestBody Map<String, Long> body) {
+        securityUtil.requireStudent();
         Long userId = securityUtil.getCurrentUserId();
         Long activityId = body.get("activityId");
         SignIn signIn = signInService.signIn(userId, activityId);
@@ -39,6 +40,7 @@ public class SignInController {
      */
     @PutMapping("/sign-in/{id}")
     public Result<?> signOut(@PathVariable Long id) {
+        securityUtil.requireStudent();
         Long userId = securityUtil.getCurrentUserId();
         signInService.signOut(id, userId);
         return Result.success("签退成功");
@@ -49,6 +51,7 @@ public class SignInController {
      */
     @GetMapping("/sign-in/status")
     public Result<SignIn> getSignInStatus(@RequestParam Long activityId) {
+        securityUtil.requireStudent();
         Long userId = securityUtil.getCurrentUserId();
         SignIn signIn = signInService.getUserSignIn(userId, activityId);
         return Result.success(signIn);

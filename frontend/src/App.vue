@@ -28,7 +28,7 @@ function handleLogout() {
         <div class="header-right">
           <el-menu mode="horizontal" :ellipsis="false" :router="true" class="header-menu">
             <el-menu-item index="/home">首页</el-menu-item>
-            <el-menu-item v-if="authStore.role !== 'admin'" index="/my-activities">我的报名</el-menu-item>
+            <el-menu-item v-if="authStore.role === 'student'" index="/my-activities">我的报名</el-menu-item>
             <el-menu-item v-if="authStore.role === 'organizer'" index="/manage">
               活动管理
             </el-menu-item>
