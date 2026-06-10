@@ -93,7 +93,7 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         Activity activity = new Activity();
         BeanUtil.copyProperties(dto, activity);
         activity.setOrganizerId(userId);
-        activity.setStatus("draft");
+        activity.setStatus("pending");
         activity.setCurrentParticipants(0);
 
         this.save(activity);
