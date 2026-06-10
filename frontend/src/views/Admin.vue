@@ -178,8 +178,8 @@ onMounted(() => {
             </el-col>
             <el-col :span="6">
               <div class="stat-card stat-purple">
-                <div class="stat-value">{{ stats?.statusStats?.pending || 0 }}</div>
-                <div class="stat-label">待审核活动</div>
+                <div class="stat-value">{{ stats?.totalRegistrations || 0 }}</div>
+                <div class="stat-label">报名总数</div>
               </div>
             </el-col>
           </el-row>
@@ -200,7 +200,7 @@ onMounted(() => {
           <div style="display:flex;gap:24px">
             <div v-for="(count, status) in (stats?.statusStats || {})" :key="status" style="flex:1">
               <div style="display:flex;align-items:center;gap:8px">
-                <span style="color:#606266;min-width:60px">{{ { draft:'草稿', pending:'待审核', approved:'已通过', ongoing:'进行中', ended:'已结束' }[status] }}</span>
+                <span style="color:#606266;min-width:60px">{{ { draft:'草稿', pending:'待审核', approved:'已通过', ongoing:'进行中', ended:'已结束', cancelled:'已取消' }[status] }}</span>
                 <el-progress :percentage="stats?.totalActivities ? Math.round(count / stats.totalActivities * 100) : 0" :color="'#409eff'" style="flex:1" />
                 <span style="color:#909399;min-width:30px">{{ count }}</span>
               </div>
