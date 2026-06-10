@@ -1,9 +1,22 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { adminApi, activityApi, categoryApi, noticeApi } from '@/api'
+import { adminApi, activityApi, categoryApi, noticeApi, dashboardApi } from '@/api'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
-const activeTab = ref('users')
+const activeTab = ref('dashboard')
+
+// ==================== 数据统计 ====================
+const stats = ref(null)
+const statsLoading = ref(false)
+
+async function fetchStats() {
+  statsLoading.value = true
+  try {
+    const res = await dashboardApi.getStats()
+    stats.value = res.data
+  } catch (e) { /* ignore */ }
+  finally { statsLoading.value = false }
+}
 
 // ==================== 用户管理 ====================
 const users = ref([])
@@ -128,6 +141,7 @@ function formatTime(time) {
 }
 
 onMounted(() => {
+  fetchStats()
   fetchUsers()
   fetchPendingActivities()
   fetchCategories()
@@ -140,6 +154,61 @@ onMounted(() => {
     <h2>⚙️ 后台管理</h2>
 
     <el-tabs v-model="activeTab" style="margin-top:16px">
+      <!-- 数据统计 -->
+      <el-tab-pane label="数据概览" name="dashboard">
+        <div v-loading="statsLoading">
+          <el-row :gutter="20" style="margin-bottom:24px">
+            <el-col :span="6">
+              <div class="stat-card stat-blue">
+                <div class="stat-value">{{ stats?.totalActivities || 0 }}</div>
+                <div class="stat-label">活动总数</div>
+              </div>
+            </el-col>
+            <el-col :span="6">
+              <div class="stat-card stat-green">
+                <div class="stat-value">{{ stats?.ongoingActivities || 0 }}</div>
+                <div class="stat-label">进行中活动</div>
+              </div>
+            </el-col>
+            <el-col :span="6">
+              <div class="stat-card stat-orange">
+                <div class="stat-value">{{ stats?.totalUsers || 0 }}</div>
+                <div class="stat-label">用户总数</div>
+              </div>
+            </el-col>
+            <el-col :span="6">
+              <div class="stat-card stat-purple">
+                <div class="stat-value">{{ stats?.statusStats?.pending || 0 }}</div>
+                <div class="stat-label">待审核活动</div>
+              </div>
+            </el-col>
+          </el-row>
+
+          <!-- 分类统计 -->
+          <h4 style="margin-bottom:12px">各分类活动数量</h4>
+          <el-row :gutter="12">
+            <el-col :span="4" v-for="cat in (stats?.categoryStats || [])" :key="cat.name" style="margin-bottom:12px">
+              <div style="background:#f5f7fa;border-radius:8px;padding:16px;text-align:center">
+                <div style="font-size:24px;font-weight:bold;color:#409eff">{{ cat.count }}</div>
+                <div style="font-size:13px;color:#909399;margin-top:4px">{{ cat.name }}</div>
+              </div>
+            </el-col>
+          </el-row>
+
+          <!-- 状态分布 -->
+          <h4 style="margin:20px 0 12px">活动状态分布</h4>
+          <div style="display:flex;gap:24px">
+            <div v-for="(count, status) in (stats?.statusStats || {})" :key="status" style="flex:1">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="color:#606266;min-width:60px">{{ { draft:'草稿', pending:'待审核', approved:'已通过', ongoing:'进行中', ended:'已结束' }[status] }}</span>
+                <el-progress :percentage="stats?.totalActivities ? Math.round(count / stats.totalActivities * 100) : 0" :color="'#409eff'" style="flex:1" />
+                <span style="color:#909399;min-width:30px">{{ count }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </el-tab-pane>
+
       <!-- 用户管理 -->
       <el-tab-pane label="用户管理" name="users">
         <div style="margin-bottom:12px;display:flex;gap:8px">
@@ -263,3 +332,25 @@ onMounted(() => {
     </el-dialog>
   </div>
 </template>
+
+<style scoped>
+.stat-card {
+  border-radius: 10px;
+  padding: 24px;
+  color: #fff;
+  text-align: center;
+}
+.stat-card .stat-value {
+  font-size: 36px;
+  font-weight: bold;
+}
+.stat-card .stat-label {
+  font-size: 14px;
+  margin-top: 4px;
+  opacity: 0.9;
+}
+.stat-blue  { background: linear-gradient(135deg, #409eff, #337ecc); }
+.stat-green { background: linear-gradient(135deg, #67c23a, #529b2e); }
+.stat-orange { background: linear-gradient(135deg, #e6a23c, #cf9236); }
+.stat-purple { background: linear-gradient(135deg, #a855f7, #9333ea); }
+</style>

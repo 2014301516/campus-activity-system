@@ -49,6 +49,11 @@ export const noticeApi = {
   getList: (params) => request.get('/notice/list', { params })
 }
 
+// ==================== 统计 ====================
+export const dashboardApi = {
+  getStats: () => request.get('/dashboard/stats')
+}
+
 // ==================== 管理员 ====================
 export const adminApi = {
   getUsers: (params) => request.get('/admin/users', { params }),
