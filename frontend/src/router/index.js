@@ -24,7 +24,8 @@ const routes = [
   {
     path: '/my-activities',
     name: 'MyActivities',
-    component: () => import('@/views/MyActivities.vue')
+    component: () => import('@/views/MyActivities.vue'),
+    meta: { roles: ['student'] }
   },
   {
     path: '/manage',

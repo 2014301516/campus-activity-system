@@ -28,6 +28,7 @@ public class ReviewController {
      */
     @PostMapping("/review")
     public Result<Review> submitReview(@RequestBody Map<String, Object> body) {
+        securityUtil.requireStudent();
         Long userId = securityUtil.getCurrentUserId();
         Long activityId = Long.valueOf(body.get("activityId").toString());
         Integer rating = Integer.valueOf(body.get("rating").toString());

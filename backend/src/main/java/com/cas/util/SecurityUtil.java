@@ -31,4 +31,13 @@ public class SecurityUtil {
         }
         return null;
     }
+
+    /**
+     * 要求当前用户必须是学生
+     */
+    public void requireStudent() {
+        if (!"student".equals(getCurrentUserRole())) {
+            throw new RuntimeException("只有学生可以进行此操作");
+        }
+    }
 }
