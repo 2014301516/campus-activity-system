@@ -6,6 +6,7 @@ import com.cas.dto.LoginDTO;
 import com.cas.dto.RegisterDTO;
 import com.cas.entity.User;
 import com.cas.service.UserService;
+import com.cas.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private SecurityUtil securityUtil;
 
     /**
      * 用户注册
@@ -44,10 +48,8 @@ public class UserController {
      * 获取当前用户信息
      */
     @GetMapping("/user/info")
-    public Result<User> getUserInfo(@RequestAttribute(required = false) Long userId) {
-        if (userId == null) {
-            return Result.unauthorized("请先登录");
-        }
+    public Result<User> getUserInfo() {
+        Long userId = securityUtil.getCurrentUserId();
         User user = userService.getById(userId);
         // 不返回密码
         user.setPassword(null);
