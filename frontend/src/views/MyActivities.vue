@@ -40,6 +40,10 @@ function goDetail(id) {
   router.push(`/activity/${id}`)
 }
 
+function isDeletedActivity(row) {
+  return row.activityTitle === '活动已删除'
+}
+
 function formatTime(time) {
   if (!time) return ''
   return time.replace('T', ' ').substring(0, 16)
@@ -91,7 +95,8 @@ onMounted(fetchData)
       <el-table v-else :data="registrations" stripe style="margin-top:20px">
         <el-table-column label="活动名称" prop="activityTitle" min-width="200">
           <template #default="{ row }">
-            <el-link type="primary" @click="goDetail(row.activityId)">{{ row.activityTitle }}</el-link>
+            <el-text v-if="isDeletedActivity(row)" type="info">{{ row.activityTitle }}</el-text>
+            <el-link v-else type="primary" @click="goDetail(row.activityId)">{{ row.activityTitle }}</el-link>
           </template>
         </el-table-column>
         <el-table-column label="报名时间" prop="registeredAt" width="160">
@@ -106,7 +111,7 @@ onMounted(fetchData)
         </el-table-column>
         <el-table-column label="操作" width="200" v-if="registrations.some(r => r.status === 'registered')">
           <template #default="{ row }">
-            <template v-if="row.status === 'registered'">
+            <template v-if="row.status === 'registered' && !isDeletedActivity(row)">
               <el-button size="small" type="danger" @click="handleCancel(row.activityId)">取消报名</el-button>
               <el-button size="small" type="success" :loading="signingActivityId === row.activityId"
                          :disabled="!canSignIn(row)"
