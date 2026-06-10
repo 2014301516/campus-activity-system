@@ -1,12 +1,14 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { userApi } from '@/api'
+import { computed, ref, onMounted } from 'vue'
+import { userApi, activityApi, registrationApi, dashboardApi } from '@/api'
 import { useAuthStore } from '@/store/auth'
 import { ElMessage } from 'element-plus'
 
 const authStore = useAuthStore()
 const loading = ref(false)
 const editing = ref(false)
+const statsLoading = ref(false)
+const profileStats = ref([])
 
 const user = ref({
   realName: '',
@@ -62,19 +64,90 @@ const roleLabel = {
   admin: '管理员'
 }
 
-onMounted(fetchUserInfo)
+const roleIntro = {
+  student: '这里展示你的基础资料和参与活动情况，方便答辩时切换到个人视角进行说明。',
+  organizer: '这里可以快速查看你的个人资料和活动发布成果，作为组织者演示的补充页。',
+  admin: '这里保留个人资料，同时可快速看到平台级数据概览，方便切换后台管理视角。'
+}
+
+const roleTagType = computed(() => {
+  return authStore.role === 'admin' ? 'danger' : authStore.role === 'organizer' ? 'warning' : 'info'
+})
+
+async function fetchProfileStats() {
+  statsLoading.value = true
+  try {
+    if (authStore.role === 'student') {
+      const res = await registrationApi.getMyRegistrations()
+      const registrations = res.data || []
+      profileStats.value = [
+        { label: '我的报名', value: registrations.length, sub: '当前账号的全部报名记录' },
+        { label: '已报名', value: registrations.filter(item => item.status === 'registered').length, sub: '仍有效的报名记录' },
+        { label: '已结束活动', value: registrations.filter(item => item.activityStatus === 'ended').length, sub: '可回顾和评价的活动' }
+      ]
+      return
+    }
+
+    if (authStore.role === 'organizer') {
+      const res = await activityApi.getList({
+        size: 100,
+        organizerId: authStore.userInfo?.userId
+      })
+      const activities = res.data.records || []
+      profileStats.value = [
+        { label: '我的活动', value: activities.length, sub: '当前账号创建的活动数量' },
+        { label: '待审核', value: activities.filter(item => item.status === 'pending').length, sub: '等待管理员审核' },
+        { label: '进行中', value: activities.filter(item => item.status === 'ongoing').length, sub: '当前进行中的活动' }
+      ]
+      return
+    }
+
+    const res = await dashboardApi.getStats()
+    const stats = res.data || {}
+    profileStats.value = [
+      { label: '平台活动', value: stats.totalActivities || 0, sub: '系统中的活动总数' },
+      { label: '进行中', value: stats.ongoingActivities || 0, sub: '当前处于进行中的活动' },
+      { label: '累计报名', value: stats.totalRegistrations || 0, sub: '平台已产生的报名记录' }
+    ]
+  } catch (e) {
+    profileStats.value = []
+  } finally {
+    statsLoading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchUserInfo()
+  fetchProfileStats()
+})
 </script>
 
 <template>
-  <div class="page-card" style="max-width:640px">
-    <h2>👤 个人中心</h2>
+  <div class="page-card profile-page">
+    <div class="profile-header">
+      <div>
+        <h2>👤 个人中心</h2>
+        <p>{{ roleIntro[authStore.role] }}</p>
+      </div>
+      <el-tag :type="roleTagType" size="large">
+        {{ roleLabel[authStore.role] || authStore.role }}
+      </el-tag>
+    </div>
+
+    <div v-loading="statsLoading" class="profile-stats">
+      <div v-for="card in profileStats" :key="card.label" class="profile-stat-card">
+        <div class="profile-stat-label">{{ card.label }}</div>
+        <div class="profile-stat-value">{{ card.value }}</div>
+        <div class="profile-stat-sub">{{ card.sub }}</div>
+      </div>
+    </div>
 
     <div v-loading="loading" style="margin-top:24px">
       <!-- 基本信息展示 -->
       <el-descriptions :column="1" border v-if="!editing">
         <el-descriptions-item label="用户名">{{ authStore.userInfo?.username }}</el-descriptions-item>
         <el-descriptions-item label="角色">
-          <el-tag :type="authStore.role === 'admin' ? 'danger' : authStore.role === 'organizer' ? 'warning' : 'info'">
+          <el-tag :type="roleTagType">
             {{ roleLabel[authStore.role] || authStore.role }}
           </el-tag>
         </el-descriptions-item>
@@ -106,3 +179,65 @@ onMounted(fetchUserInfo)
     </div>
   </div>
 </template>
+
+<style scoped>
+.profile-page {
+  max-width: 980px;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 16px;
+}
+
+.profile-header p {
+  margin-top: 8px;
+  color: #909399;
+  line-height: 1.7;
+}
+
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.profile-stat-card {
+  padding: 20px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+  border: 1px solid #e8f1ff;
+}
+
+.profile-stat-label {
+  color: #909399;
+  font-size: 13px;
+}
+
+.profile-stat-value {
+  margin-top: 8px;
+  font-size: 30px;
+  font-weight: 700;
+  color: #303133;
+}
+
+.profile-stat-sub {
+  margin-top: 8px;
+  color: #909399;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .profile-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+</style>

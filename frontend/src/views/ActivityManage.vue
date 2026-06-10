@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { activityApi, registrationApi, signInApi, categoryApi } from '@/api'
 import { useAuthStore } from '@/store/auth'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -42,6 +42,33 @@ const viewActivityId = ref(null)
 const viewActivityTitle = ref('')
 const showRegDialog = ref(false)
 const showSignDialog = ref(false)
+
+const activityStats = computed(() => {
+  const list = activities.value || []
+  const totalParticipants = list.reduce((sum, item) => sum + (item.currentParticipants || 0), 0)
+  return [
+    {
+      label: '我的活动',
+      value: list.length,
+      sub: '当前账号创建的活动总数'
+    },
+    {
+      label: '待审核',
+      value: list.filter(item => item.status === 'pending').length,
+      sub: '等待管理员处理'
+    },
+    {
+      label: '进行中',
+      value: list.filter(item => item.status === 'ongoing').length,
+      sub: '正在执行的活动'
+    },
+    {
+      label: '累计报名',
+      value: totalParticipants,
+      sub: '全部活动当前报名人数'
+    }
+  ]
+})
 
 async function fetchActivities() {
   loading.value = true
@@ -171,15 +198,26 @@ onMounted(() => {
 
 <template>
   <div class="page-card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <h2>📝 活动管理</h2>
+    <div class="manage-header">
+      <div>
+        <h2>📝 活动管理</h2>
+        <p>在这里集中维护你发布的活动，查看报名和签到情况，并及时调整活动安排。</p>
+      </div>
       <el-button type="primary" @click="openCreate">
         <el-icon><Plus /></el-icon> 发布活动
       </el-button>
     </div>
 
+    <div class="stats-grid">
+      <div v-for="card in activityStats" :key="card.label" class="stats-card">
+        <div class="stats-label">{{ card.label }}</div>
+        <div class="stats-value">{{ card.value }}</div>
+        <div class="stats-sub">{{ card.sub }}</div>
+      </div>
+    </div>
+
     <div v-loading="loading">
-      <el-empty v-if="!loading && activities.length === 0" description="暂无活动" />
+      <el-empty v-if="!loading && activities.length === 0" description="你还没有创建活动，点击右上角“发布活动”开始准备演示数据。" />
       <el-table v-else :data="activities" stripe>
         <el-table-column label="标题" prop="title" min-width="180" />
         <el-table-column label="分类" prop="categoryName" width="100" />
@@ -254,7 +292,8 @@ onMounted(() => {
 
     <!-- 报名名单对话框 -->
     <el-dialog v-model="showRegDialog" :title="'报名名单 - ' + viewActivityTitle" width="560px">
-      <el-table :data="registrations" stripe max-height="400">
+      <el-empty v-if="registrations.length === 0" description="当前还没有学生报名这场活动。" />
+      <el-table v-else :data="registrations" stripe max-height="400">
         <el-table-column label="姓名" prop="userName" />
         <el-table-column label="报名时间" width="160">
           <template #default="{ row }">{{ formatTime(row.registeredAt) }}</template>
@@ -271,7 +310,8 @@ onMounted(() => {
 
     <!-- 签到记录对话框 -->
     <el-dialog v-model="showSignDialog" :title="'签到记录 - ' + viewActivityTitle" width="560px">
-      <el-table :data="signIns" stripe max-height="400">
+      <el-empty v-if="signIns.length === 0" description="当前还没有签到记录，活动开始后再回来查看。" />
+      <el-table v-else :data="signIns" stripe max-height="400">
         <el-table-column label="姓名" prop="userName" />
         <el-table-column label="签到时间" width="160">
           <template #default="{ row }">{{ formatTime(row.signInTime) }}</template>
@@ -283,3 +323,69 @@ onMounted(() => {
     </el-dialog>
   </div>
 </template>
+
+<style scoped>
+.manage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.manage-header p {
+  margin-top: 8px;
+  color: #909399;
+  line-height: 1.7;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stats-card {
+  padding: 18px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+  border: 1px solid #e8f1ff;
+}
+
+.stats-label {
+  color: #909399;
+  font-size: 13px;
+}
+
+.stats-value {
+  margin-top: 6px;
+  font-size: 30px;
+  font-weight: 700;
+  color: #303133;
+}
+
+.stats-sub {
+  margin-top: 8px;
+  color: #909399;
+  font-size: 12px;
+}
+
+@media (max-width: 1100px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .manage-header,
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .manage-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+</style>

@@ -176,7 +176,6 @@ npm run dev
 
 当前活动状态包括：
 
-- `draft` 草稿
 - `pending` 待审核
 - `approved` 已通过 / 可报名
 - `rejected` 已驳回
