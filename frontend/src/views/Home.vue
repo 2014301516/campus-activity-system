@@ -79,6 +79,7 @@ function statusTag(status) {
     draft: { type: 'info', text: '草稿' },
     pending: { type: 'warning', text: '待审核' },
     approved: { type: 'success', text: '报名中' },
+    rejected: { type: 'danger', text: '已驳回' },
     ongoing: { type: '', text: '进行中' },
     ended: { type: 'info', text: '已结束' },
     cancelled: { type: 'danger', text: '已取消' }
@@ -351,6 +352,7 @@ onMounted(() => {
 .badge-approved  { background: #67c23a; }
 .badge-ongoing   { background: #409eff; }
 .badge-pending   { background: #e6a23c; }
+.badge-rejected  { background: #f56c6c; }
 .badge-draft     { background: #909399; }
 .badge-ended     { background: #909399; }
 .badge-cancelled { background: #f56c6c; }
