@@ -1,8 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { activityApi, registrationApi, signInApi, categoryApi } from '@/api'
+import { useAuthStore } from '@/store/auth'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
+const authStore = useAuthStore()
 const loading = ref(false)
 const activities = ref([])
 const registrations = ref([])
@@ -44,7 +46,10 @@ const showSignDialog = ref(false)
 async function fetchActivities() {
   loading.value = true
   try {
-    const res = await activityApi.getList({ size: 100 })
+    const res = await activityApi.getList({
+      size: 100,
+      organizerId: authStore.userInfo?.userId
+    })
     activities.value = res.data.records || []
   } catch (e) { /* ignore */ }
   finally { loading.value = false }
@@ -136,8 +141,21 @@ async function viewSignIns(activity) {
 
 // 状态标签
 function statusLabel(s) {
-  const map = { draft: '草稿', pending: '待审核', approved: '已通过', ongoing: '进行中', ended: '已结束', cancelled: '已取消' }
+  const map = { draft: '草稿', pending: '待审核', approved: '已通过', rejected: '已驳回', ongoing: '进行中', ended: '已结束', cancelled: '已取消' }
   return map[s] || s
+}
+
+function statusTagType(status) {
+  const map = {
+    approved: 'success',
+    pending: 'warning',
+    rejected: 'danger',
+    ongoing: 'primary',
+    ended: 'info',
+    cancelled: 'info',
+    draft: 'info'
+  }
+  return map[status] || 'info'
 }
 
 function formatTime(time) {
@@ -167,7 +185,7 @@ onMounted(() => {
         <el-table-column label="分类" prop="categoryName" width="100" />
         <el-table-column label="状态" width="80">
           <template #default="{ row }">
-            <el-tag :type="row.status === 'approved' ? 'success' : row.status === 'pending' ? 'warning' : 'info'" size="small">
+            <el-tag :type="statusTagType(row.status)" size="small">
               {{ statusLabel(row.status) }}
             </el-tag>
           </template>
@@ -183,7 +201,7 @@ onMounted(() => {
             <el-button size="small" @click="openEdit(row)" :disabled="row.status === 'ended'">编辑</el-button>
             <el-button size="small" @click="viewRegistrations(row)">报名名单</el-button>
             <el-button size="small" @click="viewSignIns(row)">签到</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button size="small" type="danger" @click="handleDelete(row.id)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>

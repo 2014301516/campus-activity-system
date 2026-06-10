@@ -157,6 +157,32 @@ function formatTime(time) {
   return time.replace('T', ' ').substring(0, 16)
 }
 
+function statusLabel(status) {
+  const map = {
+    draft: '草稿',
+    pending: '待审核',
+    approved: '已通过',
+    rejected: '已驳回',
+    ongoing: '进行中',
+    ended: '已结束',
+    cancelled: '已取消'
+  }
+  return map[status] || status
+}
+
+function statusTagType(status) {
+  const map = {
+    approved: 'success',
+    pending: 'warning',
+    rejected: 'danger',
+    draft: 'info',
+    ongoing: 'primary',
+    ended: 'info',
+    cancelled: 'info'
+  }
+  return map[status] || 'info'
+}
+
 onMounted(() => {
   fetchStats()
   fetchUsers()
@@ -218,7 +244,7 @@ onMounted(() => {
           <div style="display:flex;gap:24px">
             <div v-for="(count, status) in (stats?.statusStats || {})" :key="status" style="flex:1">
               <div style="display:flex;align-items:center;gap:8px">
-                <span style="color:#606266;min-width:60px">{{ { draft:'草稿', pending:'待审核', approved:'已通过', ongoing:'进行中', ended:'已结束', cancelled:'已取消' }[status] }}</span>
+                <span style="color:#606266;min-width:60px">{{ statusLabel(status) }}</span>
                 <el-progress :percentage="stats?.totalActivities ? Math.round(count / stats.totalActivities * 100) : 0" :color="'#409eff'" style="flex:1" />
                 <span style="color:#909399;min-width:30px">{{ count }}</span>
               </div>
@@ -283,7 +309,7 @@ onMounted(() => {
             <el-table-column label="操作" width="200">
               <template #default="{ row }">
                 <el-button size="small" type="success" @click="handleAudit(row.id, 'approved')">通过</el-button>
-                <el-button size="small" type="danger" @click="handleAudit(row.id, 'pending')">驳回</el-button>
+                <el-button size="small" type="danger" @click="handleAudit(row.id, 'rejected')">驳回</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -297,6 +323,7 @@ onMounted(() => {
             <el-option label="草稿" value="draft" />
             <el-option label="待审核" value="pending" />
             <el-option label="已通过" value="approved" />
+            <el-option label="已驳回" value="rejected" />
             <el-option label="进行中" value="ongoing" />
             <el-option label="已结束" value="ended" />
           </el-select>
@@ -308,8 +335,8 @@ onMounted(() => {
           <el-table-column label="组织者" prop="organizerName" width="100" />
           <el-table-column label="状态" width="90">
             <template #default="{ row }">
-              <el-tag :type="row.status==='approved'?'success':row.status==='pending'?'warning':row.status==='draft'?'info':''" size="small">
-                {{ {draft:'草稿',pending:'待审核',approved:'已通过',ongoing:'进行中',ended:'已结束',cancelled:'已取消'}[row.status] }}
+              <el-tag :type="statusTagType(row.status)" size="small">
+                {{ statusLabel(row.status) }}
               </el-tag>
             </template>
           </el-table-column>

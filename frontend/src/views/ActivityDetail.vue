@@ -116,7 +116,7 @@ function formatTime(time) {
 }
 
 const statusLabelMap = {
-  draft: '草稿', pending: '待审核', approved: '已通过',
+  draft: '草稿', pending: '待审核', approved: '已通过', rejected: '已驳回',
   ongoing: '进行中', ended: '已结束', cancelled: '已取消'
 }
 

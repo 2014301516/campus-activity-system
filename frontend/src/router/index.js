@@ -53,6 +53,8 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
+  const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null')
+  const role = userInfo?.role
 
   // 不需要登录的页面直接通过
   if (to.meta.noAuth) {
@@ -62,6 +64,10 @@ router.beforeEach((to, from, next) => {
   // 未登录跳转到登录页
   if (!token) {
     return next('/login')
+  }
+
+  if (to.meta.roles && !to.meta.roles.includes(role)) {
+    return next('/home')
   }
 
   next()
