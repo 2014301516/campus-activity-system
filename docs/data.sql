@@ -4,12 +4,12 @@ SET NAMES utf8mb4;
 
 -- 测试用户 (密码均为 123456)
 INSERT INTO users (username, password, real_name, student_id, phone, email, role) VALUES
-('admin',       '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5Eh', '系统管理员', '000000', '13800000000', 'admin@campus.edu', 'admin'),
-('organizer01', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5Eh', '张老师',     'T001',   '13800000001', 'zhang@campus.edu', 'organizer'),
-('organizer02', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5Eh', '李老师',     'T002',   '13800000002', 'li@campus.edu', 'organizer'),
-('student01',   '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5Eh', '王同学',     '2024001', '13800000003', 'wang@campus.edu', 'student'),
-('student02',   '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5Eh', '赵同学',     '2024002', '13800000004', 'zhao@campus.edu', 'student'),
-('student03',   '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5Eh', '刘同学',     '2024003', '13800000005', 'liu@campus.edu', 'student');
+('admin',       '$2b$12$RVATw.DRCEQKqn02neeVrum0RHeANOt2hOZ40uWc24Bdoq80dyTYu', '系统管理员', '000000', '13800000000', 'admin@campus.edu', 'admin'),
+('organizer01', '$2b$12$RVATw.DRCEQKqn02neeVrum0RHeANOt2hOZ40uWc24Bdoq80dyTYu', '张老师',     'T001',   '13800000001', 'zhang@campus.edu', 'organizer'),
+('organizer02', '$2b$12$RVATw.DRCEQKqn02neeVrum0RHeANOt2hOZ40uWc24Bdoq80dyTYu', '李老师',     'T002',   '13800000002', 'li@campus.edu', 'organizer'),
+('student01',   '$2b$12$RVATw.DRCEQKqn02neeVrum0RHeANOt2hOZ40uWc24Bdoq80dyTYu', '王同学',     '2024001', '13800000003', 'wang@campus.edu', 'student'),
+('student02',   '$2b$12$RVATw.DRCEQKqn02neeVrum0RHeANOt2hOZ40uWc24Bdoq80dyTYu', '赵同学',     '2024002', '13800000004', 'zhao@campus.edu', 'student'),
+('student03',   '$2b$12$RVATw.DRCEQKqn02neeVrum0RHeANOt2hOZ40uWc24Bdoq80dyTYu', '刘同学',     '2024003', '13800000005', 'liu@campus.edu', 'student');
 
 -- 活动分类
 INSERT INTO categories (id, name, description) VALUES
