@@ -40,8 +40,14 @@ function goDetail(id) {
   router.push(`/activity/${id}`)
 }
 
+function displayActivityTitle(row) {
+  return row.activityTitle && row.activityTitle !== '未知'
+    ? row.activityTitle
+    : '活动已删除'
+}
+
 function isDeletedActivity(row) {
-  return row.activityTitle === '活动已删除'
+  return displayActivityTitle(row) === '活动已删除'
 }
 
 function formatTime(time) {
@@ -95,8 +101,8 @@ onMounted(fetchData)
       <el-table v-else :data="registrations" stripe style="margin-top:20px">
         <el-table-column label="活动名称" prop="activityTitle" min-width="200">
           <template #default="{ row }">
-            <el-text v-if="isDeletedActivity(row)" type="info">{{ row.activityTitle }}</el-text>
-            <el-link v-else type="primary" @click="goDetail(row.activityId)">{{ row.activityTitle }}</el-link>
+            <el-text v-if="isDeletedActivity(row)" type="info">{{ displayActivityTitle(row) }}</el-text>
+            <el-link v-else type="primary" @click="goDetail(row.activityId)">{{ displayActivityTitle(row) }}</el-link>
           </template>
         </el-table-column>
         <el-table-column label="报名时间" prop="registeredAt" width="160">

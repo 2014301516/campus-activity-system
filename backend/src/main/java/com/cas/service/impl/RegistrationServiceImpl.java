@@ -12,6 +12,7 @@ import com.cas.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -151,13 +152,16 @@ public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Reg
         for (Registration r : list) {
             r.setUserName(userMap.getOrDefault(r.getUserId(), "未知"));
             Activity activity = activityMap.get(r.getActivityId());
-            if (activity != null) {
+            if (activity != null && StringUtils.hasText(activity.getTitle())) {
                 r.setActivityTitle(activity.getTitle());
                 r.setActivityStartTime(activity.getStartTime());
                 r.setActivityEndTime(activity.getEndTime());
                 r.setActivityStatus(activity.getStatus());
             } else {
                 r.setActivityTitle("活动已删除");
+                r.setActivityStartTime(null);
+                r.setActivityEndTime(null);
+                r.setActivityStatus(null);
             }
         }
     }
