@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -42,31 +43,46 @@ public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Reg
             throw new RuntimeException("该活动当前不可报名");
         }
 
-        // 检查是否已报名
         LambdaQueryWrapper<Registration> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Registration::getUserId, userId)
-               .eq(Registration::getActivityId, activityId)
-               .eq(Registration::getStatus, "registered");
-        if (this.count(wrapper) > 0) {
+               .eq(Registration::getActivityId, activityId);
+        Registration existing = this.getOne(wrapper);
+        if (existing != null && "registered".equals(existing.getStatus())) {
             throw new RuntimeException("您已报名该活动，请勿重复报名");
         }
 
-        // 检查人数上限
-        if (activity.getCurrentParticipants() >= activity.getMaxParticipants()) {
-            throw new RuntimeException("报名人数已满");
+        boolean updated = activityService.lambdaUpdate()
+                .setSql("current_participants = current_participants + 1")
+                .eq(Activity::getId, activityId)
+                .in(Activity::getStatus, "approved", "ongoing")
+                .lt(Activity::getCurrentParticipants, activity.getMaxParticipants())
+                .update();
+        if (!updated) {
+            throw new RuntimeException("报名人数已满，请刷新后重试");
         }
 
-        // 创建报名记录
+        LocalDateTime now = LocalDateTime.now();
+        if (existing != null) {
+            boolean restored = this.lambdaUpdate()
+                    .set(Registration::getStatus, "registered")
+                    .set(Registration::getRegisteredAt, now)
+                    .eq(Registration::getId, existing.getId())
+                    .eq(Registration::getStatus, "cancelled")
+                    .update();
+            if (!restored) {
+                throw new RuntimeException("您已报名该活动，请勿重复报名");
+            }
+            existing.setStatus("registered");
+            existing.setRegisteredAt(now);
+            return existing;
+        }
+
         Registration registration = new Registration();
         registration.setUserId(userId);
         registration.setActivityId(activityId);
         registration.setStatus("registered");
+        registration.setRegisteredAt(now);
         this.save(registration);
-
-        // 更新活动报名人数
-        activity.setCurrentParticipants(activity.getCurrentParticipants() + 1);
-        activityService.updateById(activity);
-
         return registration;
     }
 
@@ -85,12 +101,11 @@ public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Reg
         registration.setStatus("cancelled");
         this.updateById(registration);
 
-        // 更新活动报名人数
-        Activity activity = activityService.getById(activityId);
-        if (activity.getCurrentParticipants() > 0) {
-            activity.setCurrentParticipants(activity.getCurrentParticipants() - 1);
-            activityService.updateById(activity);
-        }
+        activityService.lambdaUpdate()
+                .setSql("current_participants = current_participants - 1")
+                .eq(Activity::getId, activityId)
+                .gt(Activity::getCurrentParticipants, 0)
+                .update();
     }
 
     @Override
@@ -123,13 +138,21 @@ public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Reg
                 list.stream().map(Registration::getUserId).collect(Collectors.toSet())
         ).stream().collect(Collectors.toMap(User::getId, User::getRealName));
 
-        Map<Long, String> activityMap = activityService.listByIds(
+        Map<Long, Activity> activityMap = activityService.listByIds(
                 list.stream().map(Registration::getActivityId).collect(Collectors.toSet())
-        ).stream().collect(Collectors.toMap(Activity::getId, Activity::getTitle));
+        ).stream().collect(Collectors.toMap(Activity::getId, activity -> activity));
 
         for (Registration r : list) {
             r.setUserName(userMap.getOrDefault(r.getUserId(), "未知"));
-            r.setActivityTitle(activityMap.getOrDefault(r.getActivityId(), "未知"));
+            Activity activity = activityMap.get(r.getActivityId());
+            if (activity != null) {
+                r.setActivityTitle(activity.getTitle());
+                r.setActivityStartTime(activity.getStartTime());
+                r.setActivityEndTime(activity.getEndTime());
+                r.setActivityStatus(activity.getStatus());
+            } else {
+                r.setActivityTitle("未知");
+            }
         }
     }
 }

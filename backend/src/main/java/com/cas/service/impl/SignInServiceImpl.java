@@ -38,6 +38,14 @@ public class SignInServiceImpl extends ServiceImpl<SignInMapper, SignIn> impleme
     @Override
     @Transactional
     public SignIn signIn(Long userId, Long activityId) {
+        Activity activity = activityService.getById(activityId);
+        if (activity == null) {
+            throw new RuntimeException("活动不存在");
+        }
+        if (!"approved".equals(activity.getStatus()) && !"ongoing".equals(activity.getStatus())) {
+            throw new RuntimeException("该活动当前不可签到");
+        }
+
         // 检查是否已报名
         LambdaQueryWrapper<Registration> rWrapper = new LambdaQueryWrapper<>();
         rWrapper.eq(Registration::getUserId, userId)
@@ -57,10 +65,12 @@ public class SignInServiceImpl extends ServiceImpl<SignInMapper, SignIn> impleme
         }
 
         // 检查活动时间
-        Activity activity = activityService.getById(activityId);
         LocalDateTime now = LocalDateTime.now();
         if (now.isBefore(activity.getStartTime().minusHours(1))) {
             throw new RuntimeException("签到时间未到，活动开始前1小时方可签到");
+        }
+        if (now.isAfter(activity.getEndTime())) {
+            throw new RuntimeException("活动已结束，不能再签到");
         }
 
         SignIn signIn = new SignIn();

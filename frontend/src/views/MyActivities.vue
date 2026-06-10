@@ -45,6 +45,39 @@ function formatTime(time) {
   return time.replace('T', ' ').substring(0, 16)
 }
 
+function parseTime(time) {
+  return time ? new Date(time.replace(' ', 'T')) : null
+}
+
+function canSignIn(row) {
+  if (row.status !== 'registered') return false
+  if (row.activityStatus !== 'approved' && row.activityStatus !== 'ongoing') return false
+
+  const now = new Date()
+  const startTime = parseTime(row.activityStartTime)
+  const endTime = parseTime(row.activityEndTime)
+  if (!startTime || !endTime) return false
+
+  const signInStartTime = new Date(startTime.getTime() - 60 * 60 * 1000)
+  return now >= signInStartTime && now <= endTime
+}
+
+function signInButtonText(row) {
+  if (row.activityStatus !== 'approved' && row.activityStatus !== 'ongoing') {
+    return '当前不可签到'
+  }
+
+  const startTime = parseTime(row.activityStartTime)
+  const endTime = parseTime(row.activityEndTime)
+  if (!startTime || !endTime) return '签到'
+
+  const now = new Date()
+  const signInStartTime = new Date(startTime.getTime() - 60 * 60 * 1000)
+  if (now < signInStartTime) return '未到签到时间'
+  if (now > endTime) return '活动已结束'
+  return '签到'
+}
+
 onMounted(fetchData)
 </script>
 
@@ -76,7 +109,8 @@ onMounted(fetchData)
             <template v-if="row.status === 'registered'">
               <el-button size="small" type="danger" @click="handleCancel(row.activityId)">取消报名</el-button>
               <el-button size="small" type="success" :loading="signingActivityId === row.activityId"
-                         @click="handleSignIn(row.activityId)">签到</el-button>
+                         :disabled="!canSignIn(row)"
+                         @click="handleSignIn(row.activityId)">{{ signInButtonText(row) }}</el-button>
             </template>
           </template>
         </el-table-column>

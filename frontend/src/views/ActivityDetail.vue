@@ -12,6 +12,7 @@ const authStore = useAuthStore()
 const activity = ref(null)
 const reviews = ref([])
 const mySignInStatus = ref(null)
+const myRegistration = ref(null)
 const loading = ref(false)
 const registering = ref(false)
 const cancelling = ref(false)
@@ -51,6 +52,14 @@ async function fetchSignInStatus() {
   } catch (e) { /* ignore */ }
 }
 
+async function fetchMyRegistration() {
+  if (!authStore.isLoggedIn || authStore.role !== 'student') return
+  try {
+    const res = await registrationApi.getMyRegistrations()
+    myRegistration.value = (res.data || []).find(item => item.activityId === activityId) || null
+  } catch (e) { /* ignore */ }
+}
+
 // 报名
 async function handleRegister() {
   registering.value = true
@@ -58,6 +67,7 @@ async function handleRegister() {
     await registrationApi.register(activityId)
     ElMessage.success('报名成功！')
     fetchDetail()
+    fetchMyRegistration()
   } catch (e) { /* ignore */ }
   finally { registering.value = false }
 }
@@ -69,6 +79,7 @@ async function handleCancel() {
     await registrationApi.cancel(activityId)
     ElMessage.success('已取消报名')
     fetchDetail()
+    fetchMyRegistration()
   } catch (e) { /* ignore */ }
   finally { cancelling.value = false }
 }
@@ -115,6 +126,46 @@ function formatTime(time) {
   return time.replace('T', ' ').substring(0, 16)
 }
 
+function parseTime(time) {
+  return time ? new Date(time.replace(' ', 'T')) : null
+}
+
+function canRegister() {
+  return !!activity.value &&
+    (activity.value.status === 'approved' || activity.value.status === 'ongoing') &&
+    myRegistration.value?.status !== 'registered'
+}
+
+function canCancel() {
+  return myRegistration.value?.status === 'registered'
+}
+
+function isSignInWindowOpen() {
+  if (!activity.value) return false
+  if (activity.value.status !== 'approved' && activity.value.status !== 'ongoing') return false
+
+  const startTime = parseTime(activity.value.startTime)
+  const endTime = parseTime(activity.value.endTime)
+  if (!startTime || !endTime) return false
+
+  const now = new Date()
+  const signInStartTime = new Date(startTime.getTime() - 60 * 60 * 1000)
+  return now >= signInStartTime && now <= endTime
+}
+
+function signInHint() {
+  if (!activity.value || !canCancel()) return ''
+  const startTime = parseTime(activity.value.startTime)
+  const endTime = parseTime(activity.value.endTime)
+  if (!startTime || !endTime) return ''
+
+  const now = new Date()
+  const signInStartTime = new Date(startTime.getTime() - 60 * 60 * 1000)
+  if (now < signInStartTime) return '活动开始前 1 小时开放签到'
+  if (now > endTime) return '活动已结束，不能再签到'
+  return ''
+}
+
 const statusLabelMap = {
   draft: '草稿', pending: '待审核', approved: '已通过', rejected: '已驳回',
   ongoing: '进行中', ended: '已结束', cancelled: '已取消'
@@ -124,6 +175,7 @@ onMounted(() => {
   fetchDetail()
   fetchReviews()
   fetchSignInStatus()
+  fetchMyRegistration()
 })
 </script>
 
@@ -156,18 +208,19 @@ onMounted(() => {
 
       <!-- 操作按钮 -->
       <div class="action-bar" v-if="authStore.isLoggedIn && authStore.role === 'student'">
-        <el-button v-if="activity.status === 'approved' || activity.status === 'ongoing'"
+        <el-button v-if="canRegister()"
                    type="primary" size="large" :loading="registering" @click="handleRegister">
           📝 立即报名
         </el-button>
-        <el-button v-if="activity.status === 'approved' || activity.status === 'ongoing'"
+        <el-button v-if="canCancel()"
                    type="warning" size="large" :loading="cancelling" @click="handleCancel">
           取消报名
         </el-button>
 
         <!-- 签到区域 -->
-        <template v-if="activity.status === 'ongoing'">
-          <el-button v-if="!mySignInStatus" type="success" size="large" :loading="signingIn" @click="handleSignIn">
+        <template v-if="canCancel()">
+          <el-button v-if="!mySignInStatus" type="success" size="large" :loading="signingIn"
+                     :disabled="!isSignInWindowOpen()" @click="handleSignIn">
             ✅ 签到
           </el-button>
           <template v-else>
@@ -177,6 +230,7 @@ onMounted(() => {
             </el-button>
             <span v-else style="color:#909399;font-size:14px">已签退: {{ formatTime(mySignInStatus.signOutTime) }}</span>
           </template>
+          <span v-if="!mySignInStatus && signInHint()" style="color:#909399;font-size:14px">{{ signInHint() }}</span>
         </template>
 
         <!-- 评价按钮 -->
