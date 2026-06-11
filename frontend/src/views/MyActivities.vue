@@ -104,6 +104,21 @@ function getSignInStatus(row) {
   return signInStatusMap.value[row.activityId] || null
 }
 
+function signStatusTagType(row) {
+  const signInRecord = getSignInStatus(row)
+  if (signInRecord?.signOutTime) return 'info'
+  if (signInRecord?.signInTime) return 'success'
+  return 'warning'
+}
+
+function signStatusText(row) {
+  if (row.status !== 'registered' || isDeletedActivity(row)) return '-'
+  const signInRecord = getSignInStatus(row)
+  if (signInRecord?.signOutTime) return '已签退'
+  if (signInRecord?.signInTime) return '已签到'
+  return '未签到'
+}
+
 function canSignIn(row) {
   if (row.status !== 'registered') return false
   if (getSignInStatus(row)?.signInTime) return false
@@ -167,6 +182,14 @@ onMounted(fetchData)
             <el-tag :type="row.status === 'registered' ? 'success' : 'info'">
               {{ row.status === 'registered' ? '已报名' : '已取消' }}
             </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="签到状态" width="110">
+          <template #default="{ row }">
+            <el-tag v-if="signStatusText(row) !== '-'" :type="signStatusTagType(row)">
+              {{ signStatusText(row) }}
+            </el-tag>
+            <span v-else class="action-empty">-</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="240" v-if="registrations.some(r => r.status === 'registered')">
