@@ -138,28 +138,6 @@ function canSignOut(row) {
   return !!signInRecord?.signInTime && !signInRecord?.signOutTime
 }
 
-function signInButtonText(row) {
-  if (getSignInStatus(row)?.signOutTime) {
-    return '-'
-  }
-  if (getSignInStatus(row)?.signInTime) {
-    return '已签到'
-  }
-  if (row.activityStatus !== 'approved' && row.activityStatus !== 'ongoing') {
-    return '当前不可签到'
-  }
-
-  const startTime = parseTime(row.activityStartTime)
-  const endTime = parseTime(row.activityEndTime)
-  if (!startTime || !endTime) return '签到'
-
-  const now = new Date()
-  const signInStartTime = new Date(startTime.getTime() - 60 * 60 * 1000)
-  if (now < signInStartTime) return '未到签到时间'
-  if (now > endTime) return '活动已结束'
-  return '签到'
-}
-
 onMounted(fetchData)
 </script>
 
@@ -203,10 +181,9 @@ onMounted(fetchData)
                 <el-button size="small" :loading="signingActivityId === row.activityId"
                            @click="handleSignOut(row.activityId)">签退</el-button>
               </template>
-              <span v-else-if="getSignInStatus(row)?.signOutTime" class="action-empty">-</span>
-              <el-button v-else size="small" type="success" :loading="signingActivityId === row.activityId"
-                         :disabled="!canSignIn(row)"
-                         @click="handleSignIn(row.activityId)">{{ signInButtonText(row) }}</el-button>
+              <el-button v-else-if="canSignIn(row)" size="small" type="success"
+                         :loading="signingActivityId === row.activityId"
+                         @click="handleSignIn(row.activityId)">签到</el-button>
             </div>
             <span v-else class="action-empty">-</span>
           </template>
