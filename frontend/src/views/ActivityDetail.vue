@@ -51,7 +51,7 @@ async function fetchReviews() {
 }
 
 async function fetchSignInStatus() {
-  if (!authStore.isLoggedIn) return
+  if (!authStore.isLoggedIn || authStore.role !== 'student') return
   try {
     const res = await signInApi.getStatus(activityId)
     mySignInStatus.value = res.data
