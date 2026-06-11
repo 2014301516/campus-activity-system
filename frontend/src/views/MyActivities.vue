@@ -64,6 +64,19 @@ async function handleSignIn(activityId) {
   finally { signingActivityId.value = null }
 }
 
+async function handleSignOut(activityId) {
+  const signInRecord = signInStatusMap.value[activityId]
+  if (!signInRecord?.id) return
+
+  signingActivityId.value = activityId
+  try {
+    await signInApi.signOut(signInRecord.id)
+    ElMessage.success('签退成功！')
+    fetchData()
+  } catch (e) { /* ignore */ }
+  finally { signingActivityId.value = null }
+}
+
 function goDetail(id) {
   router.push(`/activity/${id}`)
 }
@@ -87,9 +100,13 @@ function parseTime(time) {
   return time ? new Date(time.replace(' ', 'T')) : null
 }
 
+function getSignInStatus(row) {
+  return signInStatusMap.value[row.activityId] || null
+}
+
 function canSignIn(row) {
   if (row.status !== 'registered') return false
-  if (signInStatusMap.value[row.activityId]?.signInTime) return false
+  if (getSignInStatus(row)?.signInTime) return false
   if (row.activityStatus !== 'approved' && row.activityStatus !== 'ongoing') return false
 
   const now = new Date()
@@ -101,8 +118,13 @@ function canSignIn(row) {
   return now >= signInStartTime && now <= endTime
 }
 
+function canSignOut(row) {
+  const signInRecord = getSignInStatus(row)
+  return !!signInRecord?.signInTime && !signInRecord?.signOutTime
+}
+
 function signInButtonText(row) {
-  if (signInStatusMap.value[row.activityId]?.signInTime) {
+  if (getSignInStatus(row)?.signInTime) {
     return '已签到'
   }
   if (row.activityStatus !== 'approved' && row.activityStatus !== 'ongoing') {
@@ -151,7 +173,13 @@ onMounted(fetchData)
           <template #default="{ row }">
             <div v-if="row.status === 'registered' && !isDeletedActivity(row)" class="action-buttons">
               <el-button size="small" type="danger" @click="handleCancel(row.activityId)">取消报名</el-button>
-              <el-button size="small" type="success" :loading="signingActivityId === row.activityId"
+              <template v-if="canSignOut(row)">
+                <span class="action-status success-text">已签到</span>
+                <el-button size="small" :loading="signingActivityId === row.activityId"
+                           @click="handleSignOut(row.activityId)">签退</el-button>
+              </template>
+              <span v-else-if="getSignInStatus(row)?.signOutTime" class="action-status muted-text">已签退</span>
+              <el-button v-else size="small" type="success" :loading="signingActivityId === row.activityId"
                          :disabled="!canSignIn(row)"
                          @click="handleSignIn(row.activityId)">{{ signInButtonText(row) }}</el-button>
             </div>
@@ -173,5 +201,17 @@ onMounted(fetchData)
 
 .action-empty {
   color: #c0c4cc;
+}
+
+.action-status {
+  font-size: 13px;
+}
+
+.success-text {
+  color: #67c23a;
+}
+
+.muted-text {
+  color: #909399;
 }
 </style>
