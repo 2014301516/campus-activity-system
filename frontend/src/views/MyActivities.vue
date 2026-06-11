@@ -197,11 +197,10 @@ onMounted(fetchData)
             <div v-if="row.status === 'registered' && !isDeletedActivity(row)" class="action-buttons">
               <el-button size="small" type="danger" @click="handleCancel(row.activityId)">取消报名</el-button>
               <template v-if="canSignOut(row)">
-                <span class="action-status success-text">已签到</span>
                 <el-button size="small" :loading="signingActivityId === row.activityId"
                            @click="handleSignOut(row.activityId)">签退</el-button>
               </template>
-              <span v-else-if="getSignInStatus(row)?.signOutTime" class="action-status muted-text">已签退</span>
+              <span v-else-if="getSignInStatus(row)?.signOutTime" class="action-empty">-</span>
               <el-button v-else size="small" type="success" :loading="signingActivityId === row.activityId"
                          :disabled="!canSignIn(row)"
                          @click="handleSignIn(row.activityId)">{{ signInButtonText(row) }}</el-button>
@@ -226,15 +225,4 @@ onMounted(fetchData)
   color: #c0c4cc;
 }
 
-.action-status {
-  font-size: 13px;
-}
-
-.success-text {
-  color: #67c23a;
-}
-
-.muted-text {
-  color: #909399;
-}
 </style>
