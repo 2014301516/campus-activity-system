@@ -75,9 +75,9 @@ async function fetchProfileStats() {
       const res = await registrationApi.getMyRegistrations()
       const registrations = res.data || []
       profileStats.value = [
-        { label: '我的报名', value: registrations.length, sub: '当前账号的全部报名记录' },
-        { label: '已报名', value: registrations.filter(item => item.status === 'registered').length, sub: '仍有效的报名记录' },
-        { label: '已结束活动', value: registrations.filter(item => item.activityStatus === 'ended').length, sub: '可回顾和评价的活动' }
+        { label: '全部报名记录', value: registrations.length, sub: '当前账号产生的全部报名记录' },
+        { label: '当前有效报名', value: registrations.filter(item => item.status === 'registered').length, sub: '尚未取消的报名记录' },
+        { label: '已结束活动', value: registrations.filter(item => item.activityStatus === 'ended').length, sub: '已经结束、可回顾的活动' }
       ]
       return
     }
