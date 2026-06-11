@@ -115,17 +115,31 @@ onMounted(fetchData)
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" v-if="registrations.some(r => r.status === 'registered')">
+        <el-table-column label="操作" width="240" v-if="registrations.some(r => r.status === 'registered')">
           <template #default="{ row }">
-            <template v-if="row.status === 'registered' && !isDeletedActivity(row)">
+            <div v-if="row.status === 'registered' && !isDeletedActivity(row)" class="action-buttons">
               <el-button size="small" type="danger" @click="handleCancel(row.activityId)">取消报名</el-button>
               <el-button size="small" type="success" :loading="signingActivityId === row.activityId"
                          :disabled="!canSignIn(row)"
                          @click="handleSignIn(row.activityId)">{{ signInButtonText(row) }}</el-button>
-            </template>
+            </div>
+            <span v-else class="action-empty">-</span>
           </template>
         </el-table-column>
       </el-table>
     </div>
   </div>
 </template>
+
+<style scoped>
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+}
+
+.action-empty {
+  color: #c0c4cc;
+}
+</style>
