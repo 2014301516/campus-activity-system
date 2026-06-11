@@ -139,6 +139,9 @@ function canSignOut(row) {
 }
 
 function signInButtonText(row) {
+  if (getSignInStatus(row)?.signOutTime) {
+    return '-'
+  }
   if (getSignInStatus(row)?.signInTime) {
     return '已签到'
   }
@@ -200,6 +203,7 @@ onMounted(fetchData)
                 <el-button size="small" :loading="signingActivityId === row.activityId"
                            @click="handleSignOut(row.activityId)">签退</el-button>
               </template>
+              <span v-else-if="getSignInStatus(row)?.signOutTime" class="action-empty">-</span>
               <el-button v-else size="small" type="success" :loading="signingActivityId === row.activityId"
                          :disabled="!canSignIn(row)"
                          @click="handleSignIn(row.activityId)">{{ signInButtonText(row) }}</el-button>
