@@ -8,14 +8,42 @@ const router = useRouter()
 const loading = ref(false)
 const registrations = ref([])
 const signingActivityId = ref(null)
+const signInStatusMap = ref({})
 
 async function fetchData() {
   loading.value = true
   try {
     const res = await registrationApi.getMyRegistrations()
     registrations.value = res.data || []
+    await fetchSignInStatuses()
   } catch (e) { /* ignore */ }
   finally { loading.value = false }
+}
+
+async function fetchSignInStatuses() {
+  const targetRows = registrations.value.filter(row =>
+    row.status === 'registered' &&
+    !isDeletedActivity(row) &&
+    (row.activityStatus === 'approved' || row.activityStatus === 'ongoing')
+  )
+
+  if (targetRows.length === 0) {
+    signInStatusMap.value = {}
+    return
+  }
+
+  const entries = await Promise.all(
+    targetRows.map(async row => {
+      try {
+        const res = await signInApi.getStatus(row.activityId)
+        return [row.activityId, res.data || null]
+      } catch (e) {
+        return [row.activityId, null]
+      }
+    })
+  )
+
+  signInStatusMap.value = Object.fromEntries(entries)
 }
 
 async function handleCancel(activityId) {
@@ -61,6 +89,7 @@ function parseTime(time) {
 
 function canSignIn(row) {
   if (row.status !== 'registered') return false
+  if (signInStatusMap.value[row.activityId]?.signInTime) return false
   if (row.activityStatus !== 'approved' && row.activityStatus !== 'ongoing') return false
 
   const now = new Date()
@@ -73,6 +102,9 @@ function canSignIn(row) {
 }
 
 function signInButtonText(row) {
+  if (signInStatusMap.value[row.activityId]?.signInTime) {
+    return '已签到'
+  }
   if (row.activityStatus !== 'approved' && row.activityStatus !== 'ongoing') {
     return '当前不可签到'
   }
