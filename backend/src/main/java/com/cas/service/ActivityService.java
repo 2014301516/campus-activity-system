@@ -45,4 +45,9 @@ public interface ActivityService extends IService<Activity> {
      * 审核活动（管理员）
      */
     void auditActivity(Long id, String status);
+
+    /**
+     * 取消活动（管理员）
+     */
+    void cancelActivity(Long id);
 }

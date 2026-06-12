@@ -74,6 +74,15 @@ public class AdminController {
         return Result.success("审核完成");
     }
 
+    /**
+     * 取消活动
+     */
+    @PutMapping("/activity/{id}/cancel")
+    public Result<?> cancelActivity(@PathVariable Long id) {
+        activityService.cancelActivity(id);
+        return Result.success("活动已取消");
+    }
+
     // ==================== 分类管理 ====================
 
     /**
