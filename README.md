@@ -39,12 +39,12 @@ Campus Activity Management System
 
 ## 技术栈
 
-| 层级 | 技术 |
-| ---- | ---- |
-| 前端 | Vue 3、Vite、Element Plus、Vue Router、Pinia、Axios、ECharts、Vue-ECharts |
-| 后端 | Spring Boot 2.7.18、MyBatis-Plus 3.5.5、Spring Security、JWT、Validation、Hutool |
-| 数据库 | MySQL 8.0 |
-| 构建工具 | Maven、npm |
+| 层级     | 技术                                                                             |
+| -------- | -------------------------------------------------------------------------------- |
+| 前端     | Vue 3、Vite、Element Plus、Vue Router、Pinia、Axios、ECharts、Vue-ECharts        |
+| 后端     | Spring Boot 2.7.18、MyBatis-Plus 3.5.5、Spring Security、JWT、Validation、Hutool |
+| 数据库   | MySQL 8.0                                                                        |
+| 构建工具 | Maven、npm                                                                       |
 
 ## 项目结构
 
@@ -115,19 +115,19 @@ campus-activity-system/
 
 ## 角色权限矩阵
 
-| 功能 | 学生 | 组织者 | 管理员 |
-| ---- | :--: | :----: | :----: |
-| 浏览活动列表与详情 | ✅ | ✅ | ✅ |
-| 报名与取消报名 | ✅ | - | - |
-| 签到与签退 | ✅ | - | - |
-| 提交评价 | ✅ | - | - |
-| 创建活动 | - | ✅ | - |
-| 管理自己的活动 | - | ✅ | - |
-| 审核活动 | - | - | ✅ |
-| 用户管理 | - | - | ✅ |
-| 分类管理 | - | - | ✅ |
-| 公告管理 | - | - | ✅ |
-| 后台统计与概览 | - | - | ✅ |
+| 功能               | 学生 | 组织者 | 管理员 |
+| ------------------ | :--: | :----: | :----: |
+| 浏览活动列表与详情 |  ✅  |   ✅   |   ✅   |
+| 报名与取消报名     |  ✅  |   -   |   -   |
+| 签到与签退         |  ✅  |   -   |   -   |
+| 提交评价           |  ✅  |   -   |   -   |
+| 创建活动           |  -  |   ✅   |   -   |
+| 管理自己的活动     |  -  |   ✅   |   -   |
+| 审核活动           |  -  |   -   |   ✅   |
+| 用户管理           |  -  |   -   |   ✅   |
+| 分类管理           |  -  |   -   |   ✅   |
+| 公告管理           |  -  |   -   |   ✅   |
+| 后台统计与概览     |  -  |   -   |   ✅   |
 
 说明：
 
@@ -175,13 +175,13 @@ campus-activity-system/
 
 ## 环境要求
 
-| 工具 | 建议版本 |
-| ---- | -------- |
-| JDK | 17 及以上 |
-| Maven | 3.6 及以上，或 IntelliJ IDEA 自带 Maven |
-| Node.js | 18 及以上 |
-| npm | 9 及以上 |
-| MySQL | 8.0 |
+| 工具    | 建议版本                                |
+| ------- | --------------------------------------- |
+| JDK     | 17 及以上                               |
+| Maven   | 3.6 及以上，或 IntelliJ IDEA 自带 Maven |
+| Node.js | 18 及以上                               |
+| npm     | 9 及以上                                |
+| MySQL   | 8.0                                     |
 
 ## 快速启动
 
@@ -236,7 +236,7 @@ mvn spring-boot:run
 ### 3. 启动前端
 
 ```bash
-cd frontend
+cd E:\keshe\campus-activity-system\frontend
 npm install
 npm run dev
 ```
@@ -249,14 +249,14 @@ npm run dev
 
 ## 演示账号
 
-| 用户名 | 密码 | 角色 |
-| ------ | ---- | ---- |
-| admin | 123456 | 管理员 |
+| 用户名      | 密码   | 角色   |
+| ----------- | ------ | ------ |
+| admin       | 123456 | 管理员 |
 | organizer01 | 123456 | 组织者 |
 | organizer02 | 123456 | 组织者 |
-| student01 | 123456 | 学生 |
-| student02 | 123456 | 学生 |
-| student03 | 123456 | 学生 |
+| student01   | 123456 | 学生   |
+| student02   | 123456 | 学生   |
+| student03   | 123456 | 学生   |
 
 ## 推荐演示路径
 

@@ -1,0 +1,40 @@
+<view class="container">
+  <!-- 未登录 -->
+  <view wx:if="{{!token}}" class="empty" style="padding-top:200rpx">
+    <text>请先在首页登录</text>
+  </view>
+
+  <!-- 空列表 -->
+  <view wx:elif="{{registrations.length === 0 && !loading}}" class="empty" style="padding-top:200rpx">
+    <text>暂无报名记录</text>
+  </view>
+
+  <!-- 报名列表 -->
+  <view wx:else>
+    <view class="card reg-item" wx:for="{{registrations}}" wx:key="id">
+      <view class="reg-top">
+        <text class="reg-title ellipsis" bindtap="goDetail" data-id="{{item.activityId}}">{{item.activityTitle}}</text>
+        <text class="tag {{item.status === 'registered' ? 'tag-success' : 'tag-default'}}">
+          {{item.status === 'registered' ? '已报名' : '已取消'}}
+        </text>
+      </view>
+      <view class="reg-meta" wx:if="{{item.activityStartTime}}">
+        <text>📅 {{item.activityStartTime}}</text>
+      </view>
+      <view class="reg-meta" wx:if="{{!item.activityStartTime}}">
+        <text class="reg-deleted">活动已删除</text>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="reg-actions" wx:if="{{item.status === 'registered' && item.activityStartTime}}">
+        <button size="mini" bindtap="handleCancel" data-id="{{item.activityId}}">取消报名</button>
+        <button size="mini" type="primary" wx:if="{{!signInMap[item.activityId]}}"
+                bindtap="handleSignIn" data-id="{{item.activityId}}">签到</button>
+        <text wx:elif="{{!signInMap[item.activityId + '-out']}}" class="status-text">已签到 |
+          <text class="link" bindtap="handleSignOut" data-id="{{signInMap[item.activityId + '-id']}}">签退</text>
+        </text>
+        <text wx:else class="status-text">已签退</text>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,40 @@
+.container { padding-bottom: 32rpx; }
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+.detail-title { font-size: 20px; font-weight: 700; flex: 1; margin-right: 16rpx; }
+
+.info-grid { display: flex; flex-wrap: wrap; }
+.info-item { width: 50%; padding: 12rpx 0; }
+.info-label { font-size: 13px; color: #909399; display: block; }
+.info-value { font-size: 15px; color: #303133; }
+
+.section-title { font-size: 17px; font-weight: 600; margin-bottom: 16rpx; display: block; }
+.description { font-size: 14px; color: #606266; line-height: 1.8; white-space: pre-line; }
+
+.action-bar { display: flex; gap: 16rpx; flex-wrap: wrap; align-items: center; padding: 20rpx 24rpx; }
+.status-text { font-size: 14px; color: #67c23a; }
+
+.btn-warn { background: #e6a23c; color: #fff; border-radius: 8rpx; padding: 16rpx 32rpx; }
+.btn-success { background: #67c23a; color: #fff; border-radius: 8rpx; padding: 16rpx 32rpx; }
+
+.review-item { border-bottom: 1px solid #ebeef5; padding: 16rpx 0; }
+.review-item:last-child { border-bottom: none; }
+.review-header { display: flex; justify-content: space-between; margin-bottom: 8rpx; }
+.review-user { font-weight: 600; font-size: 15px; }
+.review-rating { font-size: 14px; color: #e6a23c; }
+.review-comment { font-size: 14px; color: #606266; line-height: 1.6; }
+.review-time { font-size: 12px; color: #c0c4cc; }
+
+/* 评价弹窗 */
+.mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; }
+.review-dialog { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 32rpx 24rpx; border-radius: 24rpx 24rpx 0 0; z-index: 101; }
+.rating-row { text-align: center; margin: 16rpx 0; }
+.star { font-size: 48rpx; color: #dcdfe6; margin: 0 8rpx; }
+.star.active { color: #e6a23c; }
+.review-input { width: 100%; height: 160rpx; border: 1px solid #dcdfe6; border-radius: 8rpx; padding: 16rpx; font-size: 14px; margin-bottom: 16rpx; }
+.dialog-btns { display: flex; gap: 16rpx; justify-content: flex-end; }

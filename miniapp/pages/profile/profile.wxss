@@ -1,0 +1,16 @@
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48rpx 24rpx;
+}
+.avatar { width: 120rpx; height: 120rpx; border-radius: 50%; background: #409eff; }
+.profile-name { font-size: 20px; font-weight: 700; margin-top: 16rpx; }
+.profile-role { font-size: 14px; color: #409eff; margin-top: 8rpx; }
+
+.info-row { display: flex; justify-content: space-between; padding: 20rpx 0; border-bottom: 1px solid #f0f0f0; }
+.info-row:last-child { border-bottom: none; }
+.info-label { font-size: 15px; color: #606266; }
+.info-val { font-size: 15px; color: #909399; }
+
+.logout-btn { background: #f56c6c; color: #fff; border-radius: 8rpx; font-size: 16px; }

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cas.common.Result;
 import com.cas.dto.LoginDTO;
 import com.cas.dto.RegisterDTO;
+import com.cas.dto.WxLoginDTO;
 import com.cas.entity.User;
 import com.cas.service.UserService;
 import com.cas.util.SecurityUtil;
@@ -41,6 +42,15 @@ public class UserController {
     @PostMapping("/user/login")
     public Result<Map<String, Object>> login(@Valid @RequestBody LoginDTO dto) {
         Map<String, Object> result = userService.login(dto);
+        return Result.success("登录成功", result);
+    }
+
+    /**
+     * 微信小程序登录
+     */
+    @PostMapping("/user/wx-login")
+    public Result<Map<String, Object>> wxLogin(@Valid @RequestBody WxLoginDTO dto) {
+        Map<String, Object> result = userService.wxLogin(dto.getCode());
         return Result.success("登录成功", result);
     }
 

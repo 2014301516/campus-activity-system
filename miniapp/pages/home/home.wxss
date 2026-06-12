@@ -1,0 +1,83 @@
+.search-bar {
+  display: flex;
+  padding: 16rpx 24rpx;
+  background: #fff;
+  gap: 16rpx;
+}
+.search-input {
+  flex: 1;
+  height: 72rpx;
+  border: 1px solid #dcdfe6;
+  border-radius: 8rpx;
+  padding: 0 16rpx;
+  font-size: 14px;
+}
+.search-btn {
+  width: 140rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  font-size: 14px;
+  background: #409eff;
+  color: #fff;
+  border-radius: 8rpx;
+  text-align: center;
+}
+
+.category-bar {
+  white-space: nowrap;
+  padding: 16rpx 24rpx;
+  background: #fff;
+}
+.category-item {
+  display: inline-block;
+  padding: 12rpx 24rpx;
+  margin-right: 16rpx;
+  border-radius: 32rpx;
+  font-size: 14px;
+  background: #f4f4f5;
+  color: #606266;
+}
+.category-item.active {
+  background: #409eff;
+  color: #fff;
+}
+
+.activity-card {
+  padding: 20rpx 24rpx;
+}
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+.card-title {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 600;
+  margin-right: 16rpx;
+}
+.card-meta {
+  font-size: 13px;
+  color: #909399;
+  margin-bottom: 12rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+.card-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.participants {
+  font-size: 13px;
+  color: #409eff;
+}
+
+.load-more {
+  text-align: center;
+  padding: 24rpx;
+  color: #409eff;
+  font-size: 14px;
+}

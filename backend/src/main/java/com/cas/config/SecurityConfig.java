@@ -36,7 +36,7 @@ public class SecurityConfig {
             .and()
             .authorizeRequests()
             // 公开接口
-            .antMatchers("/api/user/register", "/api/user/login").permitAll()
+            .antMatchers("/api/user/register", "/api/user/login", "/api/user/wx-login").permitAll()
             .antMatchers(HttpMethod.GET, "/api/activity/**").permitAll()
             .antMatchers(HttpMethod.GET, "/api/category/**").permitAll()
             .antMatchers(HttpMethod.GET, "/api/review/activity/**").permitAll()
