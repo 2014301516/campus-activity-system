@@ -1,0 +1,90 @@
+<view wx:if="{{activity}}" class="container">
+
+  <!-- 活动信息 -->
+  <view class="card">
+    <view class="detail-header">
+      <text class="detail-title">{{activity.title}}</text>
+      <text class="tag tag-{{statusTag.type}}">{{statusTag.text}}</text>
+    </view>
+
+    <view class="info-grid">
+      <view class="info-item">
+        <text class="info-label">分类</text>
+        <text class="info-value">{{activity.categoryName}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">组织者</text>
+        <text class="info-value">{{activity.organizerName}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">地点</text>
+        <text class="info-value">{{activity.location}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">报名</text>
+        <text class="info-value">{{activity.currentParticipants}} / {{activity.maxParticipants}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">开始</text>
+        <text class="info-value">{{activity.startTime}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">结束</text>
+        <text class="info-value">{{activity.endTime}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 活动描述 -->
+  <view class="card">
+    <text class="section-title">活动详情</text>
+    <text class="description">{{activity.description}}</text>
+  </view>
+
+  <!-- 操作按钮区 -->
+  <view class="card action-bar" wx:if="{{token}}">
+    <button class="btn-primary" wx:if="{{canRegister}}" bindtap="handleRegister">📝 立即报名</button>
+    <button class="btn-warn" wx:if="{{canRegister}}" bindtap="handleCancel">取消报名</button>
+    <button class="btn-success" wx:if="{{canSignIn}}" bindtap="handleSignIn">✅ 签到</button>
+    <button wx:if="{{canSignOut}}" bindtap="handleSignOut">签退</button>
+    <text wx:if="{{signInStatus === 'signed-in' && !canSignOut}}" class="status-text">已签到</text>
+    <text wx:if="{{signInStatus === 'signed-out'}}" class="status-text">已签退</text>
+    <button class="btn-primary" wx:if="{{canReview}}" bindtap="showReview">⭐ 评价</button>
+  </view>
+
+  <!-- 未登录提示 -->
+  <view class="card action-bar" wx:if="{{!token}}">
+    <button class="btn-primary" bindtap="doLoginAndRefresh">微信一键登录后参与活动</button>
+  </view>
+
+  <!-- 评价列表 -->
+  <view class="card">
+    <text class="section-title">活动评价 ({{reviews.length}})</text>
+    <view wx:if="{{reviews.length === 0}}" class="empty">暂无评价</view>
+    <view class="review-item" wx:for="{{reviews}}" wx:key="id">
+      <view class="review-header">
+        <text class="review-user">{{item.userName}}</text>
+        <text class="review-rating">⭐ {{item.rating}}</text>
+      </view>
+      <text class="review-comment">{{item.comment}}</text>
+      <text class="review-time">{{item.createdAt}}</text>
+    </view>
+  </view>
+
+  <!-- 评价弹窗 -->
+  <view class="mask" wx:if="{{showReviewDialog}}" bindtap="hideReview"></view>
+  <view class="review-dialog" wx:if="{{showReviewDialog}}">
+    <text class="section-title">评价活动</text>
+    <view class="rating-row">
+      <text wx:for="{{[1,2,3,4,5]}}" wx:key="*this"
+            class="star {{item <= reviewRating ? 'active' : ''}}"
+            bindtap="setRating" data-r="{{item}}">★</text>
+    </view>
+    <textarea class="review-input" placeholder="说说你的感受..." value="{{reviewComment}}"
+              bindinput="onReviewInput" maxlength="200" />
+    <view class="dialog-btns">
+      <button bindtap="hideReview">取消</button>
+      <button class="btn-primary" bindtap="submitReview">提交</button>
+    </view>
+  </view>
+</view>

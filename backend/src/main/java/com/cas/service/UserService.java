@@ -42,4 +42,9 @@ public interface UserService extends IService<User> {
      * 修改用户状态（管理员）
      */
     void updateStatus(Long operatorId, Long userId, Integer status);
+
+    /**
+     * 微信小程序登录（自动注册）
+     */
+    Map<String, Object> wxLogin(String code);
 }

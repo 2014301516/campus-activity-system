@@ -1,0 +1,41 @@
+<!-- 搜索栏 -->
+<view class="search-bar">
+  <input class="search-input" placeholder="搜索活动名称..." value="{{keyword}}" bindinput="onSearchInput" bindconfirm="onSearch" />
+  <button class="search-btn" bindtap="onSearch">搜索</button>
+</view>
+
+<!-- 分类筛选 -->
+<scroll-view class="category-bar" scroll-x enable-flex>
+  <view class="category-item {{!categoryId ? 'active' : ''}}" bindtap="onCategoryChange" data-id="">全部</view>
+  <view class="category-item {{categoryId === item.id ? 'active' : ''}}"
+        wx:for="{{categories}}" wx:key="id" bindtap="onCategoryChange" data-id="{{item.id}}">
+    {{item.name}}
+  </view>
+</scroll-view>
+
+<!-- 活动列表 -->
+<view wx:if="{{!loading && activities.length === 0}}" class="empty">暂无活动</view>
+
+<view class="activity-list" wx:else>
+  <view class="card activity-card" wx:for="{{activities}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
+    <view class="card-top">
+      <text class="card-title ellipsis">{{item.title}}</text>
+      <text class="tag tag-{{item.status === 'approved' ? 'success' : item.status === 'ongoing' ? 'info' : 'default'}}">
+        {{item.status === 'approved' ? '报名中' : item.status === 'ongoing' ? '进行中' : item.status}}
+      </text>
+    </view>
+    <view class="card-meta">
+      <text>📅 {{item.startTime}}</text>
+      <text>📍 {{item.location}}</text>
+    </view>
+    <view class="card-bottom">
+      <text class="tag tag-info">{{item.categoryName}}</text>
+      <text class="participants">👤 {{item.currentParticipants}}/{{item.maxParticipants}}</text>
+    </view>
+  </view>
+</view>
+
+<!-- 加载更多 -->
+<view class="load-more" wx:if="{{hasMore}}">
+  <text bindtap="loadMore">加载更多</text>
+</view>

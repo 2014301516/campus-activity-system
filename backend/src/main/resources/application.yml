@@ -26,3 +26,8 @@ mybatis-plus:
 jwt:
   secret: campus-activity-system-secret-key-2026
   expiration: 86400000  # 24小时
+
+# 微信小程序配置
+wechat:
+  appid: 你的小程序appid
+  secret: 你的小程序secret

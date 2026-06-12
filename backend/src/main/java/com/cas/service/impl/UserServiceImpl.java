@@ -9,14 +9,19 @@ import com.cas.dto.RegisterDTO;
 import com.cas.entity.User;
 import com.cas.mapper.UserMapper;
 import com.cas.service.UserService;
+import com.cas.config.WeChatConfig;
 import com.cas.util.JwtUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * 用户服务实现
@@ -27,7 +32,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private WeChatConfig weChatConfig;
+
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final RestTemplate restTemplate = new RestTemplate();
 
     @Override
     public void register(RegisterDTO dto) {
@@ -139,5 +148,52 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         user.setStatus(status);
         this.updateById(user);
+    }
+
+    @Override
+    public Map<String, Object> wxLogin(String code) {
+        // 1. 调微信接口，用 code 换 openid
+        String url = "https://api.weixin.qq.com/sns/jscode2session" +
+                "?appid=" + weChatConfig.getAppid() +
+                "&secret=" + weChatConfig.getSecret() +
+                "&js_code=" + code +
+                "&grant_type=authorization_code";
+        String resp = restTemplate.getForObject(url, String.class);
+        JSONObject json = JSONUtil.parseObj(resp);
+
+        String openid = json.getStr("openid");
+        if (openid == null) {
+            throw new RuntimeException("微信登录失败: " + json.getStr("errmsg"));
+        }
+
+        // 2. 用 openid 查用户（username = openid）
+        User user = getByUsername(openid);
+        if (user == null) {
+            // 新用户 → 自动注册
+            user = new User();
+            user.setUsername(openid);
+            user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString())); // 随机密码
+            user.setRealName("微信用户");
+            user.setStudentId("wx_" + openid.substring(0, 8));
+            user.setPhone("");
+            user.setRole("student");
+            user.setStatus(1);
+            this.save(user);
+        } else {
+            // 检查状态
+            if (user.getStatus() == 0) {
+                throw new RuntimeException("账号已被禁用");
+            }
+        }
+
+        // 3. 生成 JWT
+        String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole());
+        Map<String, Object> result = new HashMap<>();
+        result.put("token", token);
+        result.put("userId", user.getId());
+        result.put("username", user.getUsername());
+        result.put("realName", user.getRealName());
+        result.put("role", user.getRole());
+        return result;
     }
 }
