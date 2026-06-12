@@ -110,6 +110,21 @@ function handleAllActivityPageChange(page) {
   fetchAllActivities()
 }
 
+function canCancelActivity(row) {
+  return row.status !== 'ended' && row.status !== 'cancelled'
+}
+
+async function handleCancelActivity(row) {
+  try {
+    await ElMessageBox.confirm(`确定将活动“${row.title}”标记为已取消吗？`, '确认', { type: 'warning' })
+    await adminApi.cancelActivity(row.id)
+    ElMessage.success('活动已取消')
+    fetchStats()
+    fetchPendingActivities()
+    fetchAllActivities()
+  } catch (e) { /* ignore */ }
+}
+
 // ==================== 分类管理 ====================
 const categories = ref([])
 const newCategoryName = ref('')
@@ -430,6 +445,20 @@ onMounted(() => {
           </el-table-column>
           <el-table-column label="时间" width="140">
             <template #default="{ row }">{{ formatTime(row.startTime) }}</template>
+          </el-table-column>
+          <el-table-column label="操作" width="120">
+            <template #default="{ row }">
+              <el-button
+                v-if="canCancelActivity(row)"
+                size="small"
+                type="danger"
+                plain
+                @click="handleCancelActivity(row)"
+              >
+                取消活动
+              </el-button>
+              <span v-else style="color:#c0c4cc">-</span>
+            </template>
           </el-table-column>
         </el-table>
         <el-pagination

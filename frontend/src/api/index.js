@@ -59,6 +59,7 @@ export const adminApi = {
   getUsers: (params) => request.get('/admin/users', { params }),
   updateUserStatus: (id, status) => request.put(`/admin/users/${id}/status`, { status }),
   auditActivity: (id, status) => request.put(`/admin/activity/${id}/audit`, { status }),
+  cancelActivity: (id) => request.put(`/admin/activity/${id}/cancel`),
   addCategory: (data) => request.post('/admin/category', data),
   deleteCategory: (id) => request.delete(`/admin/category/${id}`),
   publishNotice: (data) => request.post('/admin/notice', data),

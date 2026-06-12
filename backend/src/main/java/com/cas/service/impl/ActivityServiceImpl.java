@@ -193,6 +193,22 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         this.updateById(activity);
     }
 
+    @Override
+    public void cancelActivity(Long id) {
+        Activity activity = this.getById(id);
+        if (activity == null) {
+            throw new RuntimeException("活动不存在");
+        }
+        if ("ended".equals(activity.getStatus())) {
+            throw new RuntimeException("已结束的活动不能取消");
+        }
+        if ("cancelled".equals(activity.getStatus())) {
+            throw new RuntimeException("活动已取消，请勿重复操作");
+        }
+        activity.setStatus("cancelled");
+        this.updateById(activity);
+    }
+
     private boolean canManageActivity(Activity activity, Long userId) {
         String role = securityUtil.getCurrentUserRole();
         return "admin".equals(role) || activity.getOrganizerId().equals(userId);
