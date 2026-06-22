@@ -67,7 +67,7 @@ function handleLogout() {
           <h2 @click="$router.push('/home')" style="cursor:pointer">🎪 校园活动管理</h2>
         </div>
         <div class="header-right">
-          <el-menu mode="horizontal" :ellipsis="false" :router="true" class="header-menu">
+          <el-menu mode="horizontal" :ellipsis="false" :router="true" :default-active="route.path" class="header-menu">
             <el-menu-item index="/home">首页</el-menu-item>
             <el-menu-item v-if="authStore.role === 'student'" index="/my-activities">我的报名</el-menu-item>
             <el-menu-item v-if="authStore.role === 'organizer'" index="/manage">活动管理</el-menu-item>
