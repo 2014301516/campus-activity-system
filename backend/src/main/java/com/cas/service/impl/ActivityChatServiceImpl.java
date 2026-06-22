@@ -35,10 +35,12 @@ public class ActivityChatServiceImpl extends ServiceImpl<ActivityChatMapper, Act
                 .eq(ActivityChat::getActivityId, activityId)
                 .orderByAsc(ActivityChat::getCreatedAt)
                 .list();
-        Map<Long, String> userMap = userService.listByIds(
-            list.stream().map(ActivityChat::getUserId).collect(Collectors.toSet())
-        ).stream().collect(Collectors.toMap(User::getId, User::getRealName));
-        list.forEach(c -> c.setUserName(userMap.getOrDefault(c.getUserId(), "未知")));
+        if (!list.isEmpty()) {
+            Map<Long, String> userMap = userService.listByIds(
+                list.stream().map(ActivityChat::getUserId).collect(Collectors.toSet())
+            ).stream().collect(Collectors.toMap(User::getId, User::getRealName));
+            list.forEach(c -> c.setUserName(userMap.getOrDefault(c.getUserId(), "未知")));
+        }
         return list;
     }
 }
