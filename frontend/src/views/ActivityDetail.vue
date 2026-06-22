@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { activityApi, registrationApi, signInApi, reviewApi } from '@/api'
+import { activityApi, registrationApi, signInApi, reviewApi, activityChatApi } from '@/api'
 import { useAuthStore } from '@/store/auth'
 import { ElMessage } from 'element-plus'
 
@@ -269,11 +269,28 @@ const reviewEmptyText = computed(() => {
   return '暂时还没有评价，参加活动后可以回来分享感受。'
 })
 
+// ===== 活动聊天室 =====
+const chatMessages = ref([])
+const chatInput = ref('')
+const chatLoading = ref(false)
+
+async function fetchChats() {
+  try { const res = await activityChatApi.getMessages(activityId); chatMessages.value = res.data || [] } catch (e) {}
+}
+async function sendChatMessage() {
+  const text = chatInput.value.trim()
+  if (!text || chatLoading.value) return
+  chatLoading.value = true
+  try { await activityChatApi.send(activityId, text); chatInput.value = ''; fetchChats() } catch (e) {}
+  finally { chatLoading.value = false }
+}
+
 onMounted(() => {
   fetchDetail()
   fetchReviews()
   fetchSignInStatus()
   fetchMyRegistration()
+  fetchChats()
 })
 </script>
 
@@ -446,6 +463,23 @@ onMounted(() => {
         <el-button type="primary" @click="submitReview">提交评价</el-button>
       </template>
     </el-dialog>
+
+    <!-- 活动聊天室 -->
+    <div class="activity-chat-section" v-if="authStore.isLoggedIn">
+      <h3 style="margin-bottom:12px">💬 活动讨论区</h3>
+      <div class="chat-messages-box">
+        <div v-if="chatMessages.length === 0" style="text-align:center;padding:24px;color:#c0c4cc">暂无讨论，来发第一条消息吧</div>
+        <div v-for="m in chatMessages" :key="m.id" class="chat-msg-row">
+          <span class="chat-user">{{ m.userName }}</span>
+          <span class="chat-content">{{ m.content }}</span>
+          <span class="chat-time">{{ m.createdAt }}</span>
+        </div>
+      </div>
+      <div class="chat-send-row">
+        <el-input v-model="chatInput" placeholder="输入消息讨论活动..." @keyup.enter="sendChatMessage" :disabled="chatLoading" size="small" />
+        <el-button type="primary" size="small" :loading="chatLoading" @click="sendChatMessage">发送</el-button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -716,4 +750,13 @@ onMounted(() => {
     grid-template-columns: 1fr;
   }
 }
+
+.activity-chat-section { margin-top: 20px; border-top: 1px solid #ebeef5; padding-top: 20px; }
+.chat-messages-box { background: #fafafa; border-radius: 8px; padding: 12px 16px; max-height: 300px; overflow-y: auto; margin-bottom: 12px; }
+.chat-msg-row { padding: 8px 0; border-bottom: 1px solid #f0f0f0; display: flex; gap: 10px; align-items: baseline; }
+.chat-msg-row:last-child { border-bottom: none; }
+.chat-user { font-weight: 600; font-size: 13px; color: #409eff; flex-shrink: 0; min-width: 60px; }
+.chat-content { font-size: 14px; color: #303133; flex: 1; }
+.chat-time { font-size: 11px; color: #c0c4cc; flex-shrink: 0; }
+.chat-send-row { display: flex; gap: 8px; }
 </style>

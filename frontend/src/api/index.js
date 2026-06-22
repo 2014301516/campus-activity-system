@@ -75,6 +75,12 @@ export const aiChatApi = {
   ask: (question, activityId, messages) => request.post('/ai/ask', { question, activityId, messages })
 }
 
+// ==================== 活动聊天室 ====================
+export const activityChatApi = {
+  getMessages: (activityId) => request.get(`/activity/${activityId}/chats`),
+  send: (activityId, content) => request.post(`/activity/${activityId}/chats`, { content })
+}
+
 // ==================== 管理员 ====================
 export const adminApi = {
   getUsers: (params) => request.get('/admin/users', { params }),
