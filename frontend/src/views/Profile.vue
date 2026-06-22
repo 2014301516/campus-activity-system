@@ -83,7 +83,14 @@ async function fetchProfileStats() {
     }
 
     if (authStore.role === 'organizer') {
-      profileStats.value = []
+      const res = await dashboardApi.getOrganizerStats()
+      const stats = res.data || {}
+      profileStats.value = [
+        { label: '已发布活动', value: stats.totalActivities || 0, sub: '你创建的活动总数' },
+        { label: '待审核', value: stats.statusStats?.pending || 0, sub: '等待管理员审核的活动' },
+        { label: '进行中', value: stats.statusStats?.ongoing || 0, sub: '当前处于进行中的活动' },
+        { label: '总报名人次', value: stats.totalRegistrations || 0, sub: '你的活动累计报名人次' }
+      ]
       return
     }
 
