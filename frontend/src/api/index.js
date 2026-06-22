@@ -54,6 +54,11 @@ export const dashboardApi = {
   getStats: () => request.get('/dashboard/stats')
 }
 
+// ==================== AI 推荐 ====================
+export const recommendationApi = {
+  getList: () => request.get('/ai/recommendations')
+}
+
 // ==================== 管理员 ====================
 export const adminApi = {
   getUsers: (params) => request.get('/admin/users', { params }),

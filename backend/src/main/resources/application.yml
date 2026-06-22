@@ -26,3 +26,11 @@ mybatis-plus:
 jwt:
   secret: campus-activity-system-secret-key-2026
   expiration: 86400000  # 24小时
+
+# DeepSeek 大模型配置
+llm:
+  deepseek:
+    base-url: https://api.deepseek.com
+    api-key: ${DEEPSEEK_API_KEY:}
+    model: deepseek-v4-pro
+    timeout: 30000

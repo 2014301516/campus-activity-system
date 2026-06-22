@@ -1,9 +1,11 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { activityApi, categoryApi, noticeApi, dashboardApi } from '@/api'
+import { activityApi, categoryApi, noticeApi, dashboardApi, recommendationApi } from '@/api'
+import { useAuthStore } from '@/store/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const loading = ref(false)
 const activityList = ref([])
 const categories = ref([])
@@ -11,6 +13,8 @@ const notices = ref([])
 const featuredActivities = ref([])
 const upcomingActivities = ref([])
 const freshActivities = ref([])
+const aiRecommendations = ref([])
+const aiLoading = ref(false)
 const total = ref(0)
 const activitySquareRef = ref(null)
 const stats = ref({
@@ -96,6 +100,23 @@ async function fetchFreshActivities() {
     const fallback = records.filter(item => !featuredIds.has(item.id))
     freshActivities.value = (deduplicated.length > 0 ? deduplicated : fallback).slice(0, 4)
   } catch (e) { /* ignore */ }
+}
+
+async function fetchAiRecommendations() {
+  if (!authStore.isLoggedIn || authStore.role !== 'student') {
+    aiRecommendations.value = []
+    return
+  }
+
+  aiLoading.value = true
+  try {
+    const res = await recommendationApi.getList()
+    aiRecommendations.value = res.data || []
+  } catch (e) {
+    aiRecommendations.value = []
+  } finally {
+    aiLoading.value = false
+  }
 }
 
 function handleSearch() {
@@ -190,6 +211,7 @@ async function initHomePage() {
     fetchActivities()
   ])
   await fetchFreshActivities()
+  await fetchAiRecommendations()
 }
 
 onMounted(() => {
@@ -336,6 +358,62 @@ onMounted(() => {
             </div>
           </div>
           <el-empty v-if="freshActivities.length === 0" description="暂无新上架活动" />
+        </div>
+      </div>
+    </section>
+
+    <section v-if="authStore.isLoggedIn && authStore.role === 'student'" class="ai-panel">
+      <div class="section-head">
+        <div>
+          <h3>AI 为你推荐</h3>
+          <p>结合你的历史报名、签到和评价记录，优先推荐更匹配的活动</p>
+        </div>
+      </div>
+
+      <div v-loading="aiLoading">
+        <el-empty v-if="!aiLoading && aiRecommendations.length === 0" description="当前暂无可推荐活动" />
+
+        <div v-else class="ai-grid">
+          <div
+            v-for="activity in aiRecommendations"
+            :key="activity.id"
+            class="ai-card"
+            @click="goDetail(activity.id)"
+          >
+            <div class="ai-card-header">
+              <div>
+                <div class="ai-card-title">{{ activity.title }}</div>
+                <div class="ai-card-meta">
+                  {{ activity.categoryName }} · {{ formatTime(activity.startTime) }}
+                </div>
+              </div>
+              <div class="ai-card-badges">
+                <el-tag size="small" type="success" effect="plain">{{ activity.tag || 'AI推荐' }}</el-tag>
+                <span class="ai-score">匹配度 {{ activity.score || 0 }}</span>
+              </div>
+            </div>
+
+            <div class="ai-card-reason">{{ activity.reason }}</div>
+
+            <div v-if="activity.analysis || activity.highlights?.length" class="ai-analysis-box">
+              <div class="ai-analysis-title">AI 分析：为什么推荐你</div>
+              <div v-if="activity.analysis" class="ai-analysis-text">{{ activity.analysis }}</div>
+              <div v-if="activity.highlights?.length" class="ai-highlights">
+                <span
+                  v-for="item in activity.highlights"
+                  :key="item"
+                  class="ai-highlight-chip"
+                >
+                  {{ item }}
+                </span>
+              </div>
+            </div>
+
+            <div class="ai-card-footer">
+              <span><el-icon><Location /></el-icon>{{ activity.location }}</span>
+              <span><el-icon><User /></el-icon>{{ activity.currentParticipants }}/{{ activity.maxParticipants }}</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -658,7 +736,8 @@ onMounted(() => {
 }
 
 .notice-panel,
-.filter-panel {
+.filter-panel,
+.ai-panel {
   background: #fff;
   border-radius: 16px;
   padding: 22px;
@@ -706,6 +785,129 @@ onMounted(() => {
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
   margin-bottom: 24px;
+}
+
+.ai-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.ai-card {
+  border: 1px solid #e6f0ff;
+  border-radius: 14px;
+  padding: 18px;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.ai-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(64, 158, 255, 0.08);
+}
+
+.ai-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.ai-card-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ai-card-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 6px;
+}
+
+.ai-card-meta {
+  font-size: 13px;
+  color: #909399;
+}
+
+.ai-card-reason {
+  color: #4c5a67;
+  line-height: 1.8;
+  font-size: 14px;
+  min-height: 74px;
+  margin-bottom: 12px;
+}
+
+.ai-score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 74px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #eef5ff, #f8fbff);
+  color: #337ecc;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #d7e8ff;
+}
+
+.ai-analysis-box {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f7fbff, #f1f7ff);
+  border: 1px solid #dbeafe;
+}
+
+.ai-analysis-title {
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3a6db1;
+}
+
+.ai-analysis-text {
+  margin-bottom: 10px;
+  color: #4f5f73;
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.ai-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ai-highlight-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f3f8ff;
+  color: #4a6fa5;
+  font-size: 12px;
+  border: 1px solid #dbeafe;
+}
+
+.ai-card-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #7a8a99;
+  font-size: 13px;
+}
+
+.ai-card-footer span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .highlight-column {
@@ -886,6 +1088,7 @@ onMounted(() => {
   .stats-grid,
   .notice-grid,
   .highlight-grid,
+  .ai-grid,
   .activity-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -897,6 +1100,7 @@ onMounted(() => {
   .stats-grid,
   .notice-grid,
   .highlight-grid,
+  .ai-grid,
   .activity-grid {
     grid-template-columns: 1fr;
   }
