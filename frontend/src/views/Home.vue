@@ -160,6 +160,7 @@ async function handleRecommendationModeChange(mode) {
 const chatInput = ref('')
 const chatMessages = ref([])
 const chatLoading = ref(false)
+const chatVisible = ref(false)
 
 const quickQuestions = ['最近有什么适合我的活动？', '哪个活动最热门？', '周末有什么安排？', '帮我推荐一个学术类活动']
 
@@ -686,6 +687,35 @@ onBeforeUnmount(() => {
         <span class="floating-nav-label">{{ item.label }}</span>
       </button>
     </aside>
+
+    <!-- AI 悬浮聊天按钮 -->
+    <div class="ai-fab" @click="chatVisible = !chatVisible" v-if="authStore.isLoggedIn && authStore.role === 'student'">
+      <span v-if="!chatVisible">🤖</span>
+      <span v-else>✕</span>
+    </div>
+
+    <!-- AI 聊天弹窗 -->
+    <div class="ai-chat-dialog" v-if="chatVisible && authStore.isLoggedIn && authStore.role === 'student'">
+      <div class="ai-chat-header">
+        <span>🤖 AI 活动助手</span>
+        <span class="ai-chat-close" @click="chatVisible = false">✕</span>
+      </div>
+      <div class="ai-chat-body">
+        <div v-if="chatMessages.length === 0" class="ai-chat-hint">
+          <p>👋 你好！我是校园活动 AI 助手</p>
+          <p style="font-size:12px;color:#909399">可以问我：最近有什么活动？哪个适合我？</p>
+        </div>
+        <div v-for="(m, i) in chatMessages" :key="i" class="ai-chat-msg" :class="m.role">
+          <div class="ai-chat-bubble" v-if="m.role === 'user'">{{ m.content }}</div>
+          <div class="ai-chat-bubble" v-else v-html="renderMarkdown(m.content)"></div>
+        </div>
+        <div v-if="chatLoading" class="ai-chat-msg ai"><div class="ai-chat-bubble">思考中...</div></div>
+      </div>
+      <div class="ai-chat-input">
+        <input v-model="chatInput" placeholder="问 AI..." @keyup.enter="sendChat(); chatVisible=true" :disabled="chatLoading" />
+        <button @click="sendChat(); chatVisible=true" :disabled="chatLoading">发送</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -1602,6 +1632,54 @@ onBeforeUnmount(() => {
 .pagination-wrap {
   text-align: center;
   margin-top: 32px;
+}
+
+/* AI 悬浮按钮 + 聊天弹窗 */
+.ai-fab {
+  position: fixed; bottom: 32px; right: 32px;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: linear-gradient(135deg, #409eff, #764ba2);
+  color: #fff; font-size: 24px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; z-index: 999;
+  box-shadow: 0 4px 20px rgba(64,158,255,0.4);
+  transition: transform 0.2s;
+}
+.ai-fab:hover { transform: scale(1.1); }
+
+.ai-chat-dialog {
+  position: fixed; bottom: 100px; right: 32px;
+  width: 380px; height: 500px; z-index: 998;
+  background: #fff; border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+  display: flex; flex-direction: column;
+}
+.ai-chat-header {
+  padding: 16px 20px; border-bottom: 1px solid #ebeef5;
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 600; font-size: 15px;
+}
+.ai-chat-close { cursor: pointer; color: #909399; font-size: 18px; }
+.ai-chat-body {
+  flex: 1; overflow-y: auto; padding: 16px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.ai-chat-hint { text-align: center; padding: 40px 16px; color: #606266; }
+.ai-chat-msg { display: flex; }
+.ai-chat-msg.user { justify-content: flex-end; }
+.ai-chat-msg.user .ai-chat-bubble { background: #409eff; color: #fff; border-radius: 14px 14px 4px 14px; }
+.ai-chat-msg.ai .ai-chat-bubble { background: #f0f2f5; color: #303133; border-radius: 14px 14px 14px 4px; }
+.ai-chat-bubble { max-width: 280px; padding: 10px 14px; font-size: 13px; line-height: 1.6; }
+.ai-chat-input {
+  display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #ebeef5;
+}
+.ai-chat-input input {
+  flex: 1; border: 1px solid #dcdfe6; border-radius: 20px;
+  padding: 8px 16px; font-size: 13px; outline: none;
+}
+.ai-chat-input input:focus { border-color: #409eff; }
+.ai-chat-input button {
+  background: #409eff; color: #fff; border: none;
+  border-radius: 20px; padding: 8px 18px; font-size: 13px; cursor: pointer;
 }
 
 .floating-nav {
