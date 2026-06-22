@@ -125,11 +125,11 @@ onMounted(() => {
       </el-tag>
     </div>
 
-    <div v-if="profileStats.length > 0" v-loading="statsLoading" class="profile-stats">
-      <div v-for="card in profileStats" :key="card.label" class="profile-stat-card">
-        <div class="profile-stat-label">{{ card.label }}</div>
-        <div class="profile-stat-value">{{ card.value }}</div>
-        <div class="profile-stat-sub">{{ card.sub }}</div>
+    <div v-if="profileStats.length > 0" v-loading="statsLoading" class="stats-grid">
+      <div v-for="(card, idx) in profileStats" :key="card.label" :class="['stat-card', ['stat-blue','stat-green','stat-orange','stat-purple'][idx]]">
+        <div class="stat-value">{{ card.value }}</div>
+        <div class="stat-label">{{ card.label }}</div>
+        <div class="stat-sub">{{ card.sub }}</div>
       </div>
     </div>
 
@@ -187,37 +187,6 @@ onMounted(() => {
   margin-top: 8px;
   color: #909399;
   line-height: 1.7;
-}
-.profile-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-top: 20px;
-}
-
-.profile-stat-card {
-  padding: 20px;
-  border-radius: 16px;
-  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
-  border: 1px solid #e8f1ff;
-}
-
-.profile-stat-label {
-  color: #909399;
-  font-size: 13px;
-}
-
-.profile-stat-value {
-  margin-top: 8px;
-  font-size: 30px;
-  font-weight: 700;
-  color: #303133;
-}
-
-.profile-stat-sub {
-  margin-top: 8px;
-  color: #909399;
-  font-size: 12px;
 }
 
 @media (max-width: 900px) {

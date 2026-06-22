@@ -1132,54 +1132,6 @@ onBeforeUnmount(() => {
   color: #909399;
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
-  margin-bottom: 28px;
-}
-
-.stat-card {
-  border-radius: 22px;
-  padding: 24px;
-  color: #fff;
-  box-shadow: 0 20px 40px rgba(44, 72, 110, 0.14);
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-card::after {
-  content: '';
-  position: absolute;
-  top: -24px;
-  right: -24px;
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.16);
-}
-
-.stat-value {
-  font-size: 34px;
-  font-weight: 700;
-}
-
-.stat-label {
-  margin-top: 6px;
-  font-size: 15px;
-}
-
-.stat-sub {
-  margin-top: 8px;
-  font-size: 12px;
-  opacity: 0.9;
-}
-
-.stat-blue { background: linear-gradient(135deg, #3e8dff, #5aa9ff); }
-.stat-green { background: linear-gradient(135deg, #32b67a, #57c68e); }
-.stat-orange { background: linear-gradient(135deg, #f0a43b, #f4ba5e); }
-.stat-purple { background: linear-gradient(135deg, #7d63ff, #9b7dff); }
-
 .section-head {
   display: flex;
   justify-content: space-between;

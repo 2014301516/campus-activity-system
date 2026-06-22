@@ -732,25 +732,6 @@ onMounted(() => {
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
-.stat-card {
-  border-radius: 10px;
-  padding: 24px;
-  color: #fff;
-  text-align: center;
-}
-.stat-card .stat-value {
-  font-size: 36px;
-  font-weight: bold;
-}
-.stat-card .stat-label {
-  font-size: 14px;
-  margin-top: 4px;
-  opacity: 0.9;
-}
-.stat-blue  { background: linear-gradient(135deg, #409eff, #337ecc); }
-.stat-green { background: linear-gradient(135deg, #67c23a, #529b2e); }
-.stat-orange { background: linear-gradient(135deg, #e6a23c, #cf9236); }
-.stat-purple { background: linear-gradient(135deg, #a855f7, #9333ea); }
 
 @media (max-width: 900px) {
   .status-chart-card {

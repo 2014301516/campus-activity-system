@@ -139,4 +139,15 @@ body {
 
 .el-main { padding: 24px 40px; max-width: 1400px; margin: 0 auto; }
 .page-card { background: #fff; border-radius: 8px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+
+/* 全局彩色统计卡片 */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+.stat-card { border-radius: 14px; padding: 24px 20px; color: #fff; position: relative; overflow: hidden; }
+.stat-value { font-size: 34px; font-weight: 700; letter-spacing: -0.5px; }
+.stat-label { font-size: 14px; opacity: 0.9; margin-top: 4px; font-weight: 500; }
+.stat-sub { font-size: 12px; opacity: 0.65; margin-top: 6px; }
+.stat-blue  { background: linear-gradient(135deg, #409eff, #337ecc); }
+.stat-green { background: linear-gradient(135deg, #67c23a, #529b2e); }
+.stat-orange{ background: linear-gradient(135deg, #e6a23c, #cf9236); }
+.stat-purple{ background: linear-gradient(135deg, #a855f7, #9333ea); }
 </style>

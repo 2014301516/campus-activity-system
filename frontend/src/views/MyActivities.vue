@@ -171,18 +171,18 @@ onMounted(() => { fetchData(); fetchMyStats() })
     <h2>📋 我的报名</h2>
 
     <!-- 统计卡片 -->
-    <div class="my-stats-row" v-if="myStats">
-      <div class="my-stat-card blue">
-        <div class="my-stat-value">{{ myStats.totalRegistrations }}</div>
-        <div class="my-stat-label">已报名</div>
+    <div class="stats-grid" v-if="myStats" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat-card stat-blue">
+        <div class="stat-value">{{ myStats.totalRegistrations }}</div>
+        <div class="stat-label">已报名</div>
       </div>
-      <div class="my-stat-card green">
-        <div class="my-stat-value">{{ myStats.totalSignIns }}</div>
-        <div class="my-stat-label">已签到</div>
+      <div class="stat-card stat-green">
+        <div class="stat-value">{{ myStats.totalSignIns }}</div>
+        <div class="stat-label">已签到</div>
       </div>
-      <div class="my-stat-card orange">
-        <div class="my-stat-value">{{ myStats.totalReviews }}</div>
-        <div class="my-stat-label">已评价</div>
+      <div class="stat-card stat-orange">
+        <div class="stat-value">{{ myStats.totalReviews }}</div>
+        <div class="stat-label">已评价</div>
       </div>
     </div>
 
@@ -251,24 +251,6 @@ onMounted(() => { fetchData(); fetchMyStats() })
 .action-empty {
   color: #c0c4cc;
 }
-
-.my-stats-row {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-.my-stat-card {
-  flex: 1;
-  border-radius: 10px;
-  padding: 20px 16px;
-  color: #fff;
-  text-align: center;
-}
-.my-stat-card .my-stat-value { font-size: 28px; font-weight: 700; }
-.my-stat-card .my-stat-label { font-size: 13px; opacity: 0.85; margin-top: 4px; }
-.my-stat-card.blue   { background: linear-gradient(135deg, #409eff, #337ecc); }
-.my-stat-card.green  { background: linear-gradient(135deg, #67c23a, #529b2e); }
-.my-stat-card.orange { background: linear-gradient(135deg, #e6a23c, #cf9236); }
 
 .my-chart-wrap {
   background: #fafafa;
