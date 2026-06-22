@@ -118,11 +118,15 @@ async function fetchPendingActivities() {
   finally { auditLoading.value = false }
 }
 
+const aiSuggestionLoading = ref(null)
+
 async function showAiSuggestion(row) {
+  aiSuggestionLoading.value = row.id
   try {
     const res = await aiChatApi.getAuditSuggestion(row.id)
     ElMessageBox.alert(res.data.suggestion, 'AI 审核建议 - ' + row.title, { confirmButtonText: '知道了' })
   } catch (e) { /* ignore */ }
+  finally { aiSuggestionLoading.value = null }
 }
 
 async function handleAudit(row, status) {
@@ -541,7 +545,7 @@ onMounted(() => {
                 <el-button size="small" type="danger" @click="handleAudit(row, 'rejected')">
                   {{ row.status === 'cancel_pending' ? '驳回申请' : '驳回' }}
                 </el-button>
-                <el-button size="small" type="warning" @click="showAiSuggestion(row)">🤖 AI建议</el-button>
+                <el-button size="small" type="warning" :loading="aiSuggestionLoading === row.id" @click="showAiSuggestion(row)">🤖 AI建议</el-button>
               </template>
             </el-table-column>
           </el-table>
