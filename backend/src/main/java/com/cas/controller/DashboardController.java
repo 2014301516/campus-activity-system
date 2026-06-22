@@ -243,7 +243,8 @@ public class DashboardController {
                 .map(a -> {
                     Map<String, Object> m = new HashMap<>();
                     m.put("title", a.getTitle().length() > 12 ? a.getTitle().substring(0, 12) + "..." : a.getTitle());
-                    m.put("count", a.getCurrentParticipants());
+                    long count = a.getCurrentParticipants() != null ? a.getCurrentParticipants() : 0;
+                    m.put("count", count);
                     return m;
                 })
                 .sorted((a, b) -> Long.compare((Long) b.get("count"), (Long) a.get("count")))
