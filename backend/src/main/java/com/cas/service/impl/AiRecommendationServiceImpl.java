@@ -265,11 +265,12 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
             JsonNode root = objectMapper.readTree(response.getBody());
             JsonNode contentNode = root.path("choices").path(0).path("message").path("content");
-            if (contentNode.isMissingNode() || !StringUtils.hasText(contentNode.asText())) {
+            String contentText = extractContentText(contentNode);
+            if (!StringUtils.hasText(contentText)) {
                 return new HashMap<>();
             }
 
-            JsonNode jsonNode = objectMapper.readTree(contentNode.asText());
+            JsonNode jsonNode = parseRecommendationJson(contentText);
             JsonNode itemsNode = jsonNode.path("items");
             if (!itemsNode.isArray()) {
                 return new HashMap<>();
@@ -308,6 +309,116 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
         factory.setConnectTimeout(timeout);
         factory.setReadTimeout(timeout);
         return new RestTemplate(factory);
+    }
+
+    private String extractContentText(JsonNode contentNode) {
+        if (contentNode == null || contentNode.isMissingNode() || contentNode.isNull()) {
+            return "";
+        }
+        if (contentNode.isTextual()) {
+            return contentNode.asText();
+        }
+        if (contentNode.isArray()) {
+            StringBuilder builder = new StringBuilder();
+            for (JsonNode item : contentNode) {
+                if (item.isTextual()) {
+                    builder.append(item.asText()).append('\n');
+                    continue;
+                }
+                JsonNode textNode = item.path("text");
+                if (textNode.isTextual()) {
+                    builder.append(textNode.asText()).append('\n');
+                    continue;
+                }
+                JsonNode contentTextNode = item.path("content");
+                if (contentTextNode.isTextual()) {
+                    builder.append(contentTextNode.asText()).append('\n');
+                }
+            }
+            return builder.toString().trim();
+        }
+        return contentNode.toString();
+    }
+
+    private JsonNode parseRecommendationJson(String rawContent) throws Exception {
+        List<String> candidates = new ArrayList<>();
+        candidates.add(rawContent);
+
+        String cleaned = rawContent.trim();
+        if (cleaned.startsWith("```")) {
+            cleaned = cleaned.replaceFirst("^```(?:json)?\\s*", "");
+            cleaned = cleaned.replaceFirst("\\s*```$", "");
+            candidates.add(cleaned.trim());
+        }
+
+        String extracted = extractFirstJsonObject(cleaned);
+        if (StringUtils.hasText(extracted)) {
+            candidates.add(extracted);
+        }
+
+        for (String candidate : candidates) {
+            if (!StringUtils.hasText(candidate)) {
+                continue;
+            }
+            try {
+                return objectMapper.readTree(candidate);
+            } catch (Exception ignored) {
+                // 尝试下一种兼容形式
+            }
+        }
+
+        throw new IllegalArgumentException("无法从大模型返回内容中解析 JSON");
+    }
+
+    private String extractFirstJsonObject(String text) {
+        if (!StringUtils.hasText(text)) {
+            return "";
+        }
+
+        int start = text.indexOf('{');
+        if (start < 0) {
+            return "";
+        }
+
+        int braceDepth = 0;
+        boolean inString = false;
+        boolean escaped = false;
+
+        for (int i = start; i < text.length(); i++) {
+            char ch = text.charAt(i);
+
+            if (inString) {
+                if (escaped) {
+                    escaped = false;
+                    continue;
+                }
+                if (ch == '\\') {
+                    escaped = true;
+                    continue;
+                }
+                if (ch == '"') {
+                    inString = false;
+                }
+                continue;
+            }
+
+            if (ch == '"') {
+                inString = true;
+                continue;
+            }
+            if (ch == '{') {
+                braceDepth++;
+                continue;
+            }
+            if (ch == '}') {
+                braceDepth--;
+                if (braceDepth == 0) {
+                    return text.substring(start, i + 1);
+                }
+            }
+        }
+
+        return "";
     }
 
     private String buildPrompt(UserPreferenceProfile profile, List<ScoredActivity> rankedCandidates) throws Exception {
