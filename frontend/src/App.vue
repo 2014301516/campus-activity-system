@@ -12,10 +12,23 @@ const route = useRoute()
 
 const showLayout = computed(() => route.path !== '/login')
 const unreadCount = ref(0)
+const notifications = ref([])
+const notifVisible = ref(false)
 
 async function fetchUnreadCount() {
   if (!authStore.isLoggedIn) return
   try { const res = await notificationApi.getUnreadCount(); unreadCount.value = res.data.count } catch (e) {}
+}
+async function fetchNotifications() {
+  if (!authStore.isLoggedIn) return
+  try { const res = await notificationApi.getMyNotifications(); notifications.value = res.data || [] } catch (e) {}
+}
+async function markAllRead() {
+  try { await notificationApi.markAllRead(); unreadCount.value = 0; notifications.value.forEach(n => n.isRead = 0) } catch (e) {}
+}
+function toggleNotif() {
+  notifVisible.value = !notifVisible.value
+  if (notifVisible.value) fetchNotifications()
 }
 
 watch(() => route.path, () => { fetchUnreadCount() })
@@ -47,9 +60,23 @@ function handleLogout() {
               后台管理
             </el-menu-item>
           </el-menu>
-          <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99" class="notify-badge">
-            <el-button :icon="Bell" circle @click="$router.push('/profile')" />
-          </el-badge>
+          <el-popover placement="bottom-end" :width="380" trigger="click" :visible="notifVisible" @show="fetchNotifications">
+            <template #reference>
+              <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99" class="notify-badge">
+                <el-button :icon="Bell" circle @click="toggleNotif" />
+              </el-badge>
+            </template>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <b>🔔 消息通知</b>
+              <el-button v-if="unreadCount > 0" size="small" text type="primary" @click="markAllRead">全部已读</el-button>
+            </div>
+            <div v-if="notifications.length === 0" style="text-align:center;padding:24px;color:#c0c4cc">暂无消息</div>
+            <div v-for="n in notifications" :key="n.id" class="pop-notif-item" :style="{ background: n.isRead === 0 ? '#f0f7ff' : '#fff' }">
+              <div class="pop-notif-title">{{ n.title }}</div>
+              <div class="pop-notif-content">{{ n.content }}</div>
+              <div class="pop-notif-time">{{ n.createdAt }}</div>
+            </div>
+          </el-popover>
           <el-dropdown class="user-dropdown">
             <span class="user-info">
               <el-avatar :size="32" icon="UserFilled" />
@@ -142,4 +169,8 @@ body {
 }
 
 .notify-badge { margin-right: 8px; }
+.pop-notif-item { padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; cursor: pointer; }
+.pop-notif-title { font-size: 14px; font-weight: 600; color: #303133; margin-bottom: 4px; }
+.pop-notif-content { font-size: 13px; color: #606266; line-height: 1.5; margin-bottom: 4px; }
+.pop-notif-time { font-size: 12px; color: #c0c4cc; }
 </style>

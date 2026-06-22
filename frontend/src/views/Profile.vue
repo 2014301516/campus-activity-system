@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
-import { userApi, activityApi, registrationApi, dashboardApi, notificationApi } from '@/api'
+import { userApi, activityApi, registrationApi, dashboardApi } from '@/api'
 import { useAuthStore } from '@/store/auth'
 import { ElMessage } from 'element-plus'
 
@@ -108,23 +108,9 @@ async function fetchProfileStats() {
   }
 }
 
-// ===== 消息通知 =====
-const notifications = ref([])
-const notifLoading = ref(false)
-
-async function fetchNotifications() {
-  notifLoading.value = true
-  try { const res = await notificationApi.getMyNotifications(); notifications.value = res.data || [] } catch (e) {}
-  finally { notifLoading.value = false }
-}
-async function markAllRead() {
-  try { await notificationApi.markAllRead(); notifications.value.forEach(n => n.isRead = 1) } catch (e) {}
-}
-
 onMounted(() => {
   fetchUserInfo()
   fetchProfileStats()
-  fetchNotifications()
 })
 </script>
 
@@ -175,26 +161,7 @@ onMounted(() => {
       </el-form>
 
       <div style="margin-top:20px">
-    <!-- 消息通知 -->
-    <div class="notif-section" style="margin-top:24px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <h3 style="font-size:16px">🔔 消息通知</h3>
-        <el-button v-if="notifications.filter(n=>n.isRead===0).length>0" size="small" text @click="markAllRead">全部已读</el-button>
-      </div>
-      <div v-loading="notifLoading">
-        <div v-if="notifications.length === 0" style="text-align:center;padding:16px;color:#c0c4cc">暂无消息</div>
-        <div v-for="n in notifications" :key="n.id" class="notif-item" :class="{ unread: n.isRead === 0 }">
-          <div class="notif-header">
-            <span class="notif-title">{{ n.title }}</span>
-            <span class="notif-time">{{ n.createdAt }}</span>
-          </div>
-          <div class="notif-content">{{ n.content }}</div>
-          <el-tag v-if="n.isRead===0" size="small" type="danger" effect="plain">未读</el-tag>
-        </div>
-      </div>
-    </div>
-
-        <el-button v-if="!editing" type="primary" @click="editing = true">编辑资料</el-button>
+    <el-button v-if="!editing" type="primary" @click="editing = true">编辑资料</el-button>
         <template v-else>
           <el-button type="primary" @click="handleSave">保存</el-button>
           <el-button @click="editing = false">取消</el-button>
