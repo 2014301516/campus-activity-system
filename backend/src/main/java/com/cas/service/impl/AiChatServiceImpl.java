@@ -173,18 +173,34 @@ public class AiChatServiceImpl implements AiChatService {
         if (activity == null) return "活动不存在";
 
         String catName = categoryService.getById(activity.getCategoryId()).getName();
-        String prompt = "请审核以下校园活动并给出建议（50-100字）：\n"
-                + "标题：" + activity.getTitle() + "\n"
-                + "分类：" + catName + "\n"
-                + "描述：" + activity.getDescription() + "\n"
-                + "地点：" + activity.getLocation() + "\n"
-                + "时间：" + activity.getStartTime() + " ~ " + activity.getEndTime() + "\n"
-                + "人数上限：" + activity.getMaxParticipants() + "\n"
-                + "请评估：1）是否适合校园发布 2）信息是否完整 3）建议通过还是驳回";
+        String systemPrompt;
+        String prompt;
+
+        if ("cancel_pending".equals(activity.getStatus())) {
+            systemPrompt = "你是校园活动审核助手，评估取消申请是否合理。";
+            prompt = "组织者申请取消以下活动，请评估是否应该同意取消（50-100字）：\n"
+                    + "标题：" + activity.getTitle() + "\n"
+                    + "分类：" + catName + "\n"
+                    + "地点：" + activity.getLocation() + "\n"
+                    + "时间：" + activity.getStartTime() + " ~ " + activity.getEndTime() + "\n"
+                    + "已报名人数：" + activity.getCurrentParticipants() + "/" + activity.getMaxParticipants() + "\n"
+                    + "取消理由：" + (activity.getCancelRequestReason() != null ? activity.getCancelRequestReason() : "未提供") + "\n"
+                    + "请评估：1）取消理由是否充分 2）是否影响已报名学生 3）建议同意还是驳回";
+        } else {
+            systemPrompt = "你是校园活动审核助手，给出简洁专业的审核建议。";
+            prompt = "请审核以下校园活动并给出建议（50-100字）：\n"
+                    + "标题：" + activity.getTitle() + "\n"
+                    + "分类：" + catName + "\n"
+                    + "描述：" + activity.getDescription() + "\n"
+                    + "地点：" + activity.getLocation() + "\n"
+                    + "时间：" + activity.getStartTime() + " ~ " + activity.getEndTime() + "\n"
+                    + "人数上限：" + activity.getMaxParticipants() + "\n"
+                    + "请评估：1）是否适合校园发布 2）信息是否完整 3）建议通过还是驳回";
+        }
 
         try {
             List<Map<String, String>> msgs = new ArrayList<>();
-            msgs.add(Map.of("role", "system", "content", "你是校园活动审核助手，给出简洁专业的审核建议。"));
+            msgs.add(Map.of("role", "system", "content", systemPrompt));
             msgs.add(Map.of("role", "user", "content", prompt));
             return callDeepSeek(msgs);
         } catch (Exception e) {
