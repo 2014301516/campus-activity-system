@@ -51,7 +51,9 @@ export const noticeApi = {
 
 // ==================== 统计 ====================
 export const dashboardApi = {
-  getStats: () => request.get('/dashboard/stats')
+  getStats: () => request.get('/dashboard/stats'),
+  getRegistrationTrend: () => request.get('/dashboard/registration-trend'),
+  getMonthlyActivities: () => request.get('/dashboard/monthly-activities')
 }
 
 // ==================== AI 推荐 ====================

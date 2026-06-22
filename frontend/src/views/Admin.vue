@@ -6,10 +6,10 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import VChart from 'vue-echarts'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { PieChart } from 'echarts/charts'
-import { LegendComponent, TooltipComponent } from 'echarts/components'
+import { PieChart, BarChart, LineChart } from 'echarts/charts'
+import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
 
-use([CanvasRenderer, PieChart, LegendComponent, TooltipComponent])
+use([CanvasRenderer, PieChart, BarChart, LineChart, GridComponent, LegendComponent, TooltipComponent])
 
 const authStore = useAuthStore()
 const activeTab = ref('dashboard')
@@ -26,6 +26,56 @@ async function fetchStats() {
   } catch (e) { /* ignore */ }
   finally { statsLoading.value = false }
 }
+
+// ==================== 报名趋势 + 月度对比 ====================
+const trendData = ref([])
+const monthlyData = ref([])
+
+async function fetchTrendData() {
+  try { const res = await dashboardApi.getRegistrationTrend(); trendData.value = res.data || [] } catch (e) {}
+}
+async function fetchMonthlyData() {
+  try { const res = await dashboardApi.getMonthlyActivities(); monthlyData.value = res.data || [] } catch (e) {}
+}
+
+const trendChartOption = computed(() => ({
+  tooltip: { trigger: 'axis' },
+  grid: { left: 40, right: 20, top: 20, bottom: 30 },
+  xAxis: {
+    type: 'category',
+    data: trendData.value.map(d => d.date),
+    axisLabel: { fontSize: 11, rotate: 45 }
+  },
+  yAxis: { type: 'value', minInterval: 1 },
+  series: [{
+    data: trendData.value.map(d => d.count),
+    type: 'line',
+    smooth: true,
+    areaStyle: { color: 'rgba(64,158,255,0.15)' },
+    lineStyle: { color: '#409eff', width: 2 },
+    itemStyle: { color: '#409eff' }
+  }]
+}))
+
+const monthlyChartOption = computed(() => ({
+  tooltip: { trigger: 'axis' },
+  grid: { left: 40, right: 20, top: 20, bottom: 30 },
+  xAxis: {
+    type: 'category',
+    data: monthlyData.value.map(d => d.month),
+    axisLabel: { fontSize: 11 }
+  },
+  yAxis: { type: 'value', minInterval: 1 },
+  series: [{
+    data: monthlyData.value.map(d => d.count),
+    type: 'bar',
+    barWidth: '50%',
+    itemStyle: {
+      color: '#409eff',
+      borderRadius: [6, 6, 0, 0]
+    }
+  }]
+}))
 
 // ==================== 用户管理 ====================
 const users = ref([])
@@ -278,6 +328,8 @@ function statusTagType(status) {
 
 onMounted(() => {
   fetchStats()
+  fetchTrendData()
+  fetchMonthlyData()
   fetchUsers()
   fetchPendingActivities()
   fetchAllActivities()
@@ -347,6 +399,18 @@ onMounted(() => {
                 <span class="status-count">{{ count }}</span>
               </div>
             </div>
+          </div>
+
+          <!-- 报名趋势 -->
+          <h4 style="margin:24px 0 12px">近30天报名趋势</h4>
+          <div class="chart-container">
+            <v-chart :option="trendChartOption" :autoresize="true" style="height:260px" />
+          </div>
+
+          <!-- 月度活动对比 -->
+          <h4 style="margin:24px 0 12px">月度活动数量</h4>
+          <div class="chart-container">
+            <v-chart :option="monthlyChartOption" :autoresize="true" style="height:220px" />
           </div>
         </div>
       </el-tab-pane>
@@ -579,6 +643,13 @@ onMounted(() => {
 .status-count {
   font-weight: 600;
   color: #303133;
+}
+
+.chart-container {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
 .stat-card {
