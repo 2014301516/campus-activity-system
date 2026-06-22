@@ -70,7 +70,7 @@ public class AdminController {
     @PutMapping("/activity/{id}/audit")
     public Result<?> auditActivity(@PathVariable Long id, @RequestBody Map<String, String> body) {
         String status = body.get("status"); // approved / rejected
-        activityService.auditActivity(id, status);
+        activityService.auditActivity(id, status, body.get("rejectReason"));
         return Result.success("审核完成");
     }
 

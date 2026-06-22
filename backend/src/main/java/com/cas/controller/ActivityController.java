@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.Map;
 
 /**
  * 活动控制器
@@ -79,9 +80,9 @@ public class ActivityController {
      * 申请取消活动（组织者）
      */
     @PutMapping("/activity/{id}/cancel-request")
-    public Result<?> requestCancel(@PathVariable Long id) {
+    public Result<?> requestCancel(@PathVariable Long id, @RequestBody Map<String, String> body) {
         Long userId = securityUtil.getCurrentUserId();
-        activityService.requestCancelActivity(id, userId);
+        activityService.requestCancelActivity(id, userId, body.get("cancelRequestReason"));
         return Result.success("已提交取消申请，等待管理员审核");
     }
 }

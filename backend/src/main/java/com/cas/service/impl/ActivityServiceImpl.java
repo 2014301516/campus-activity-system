@@ -136,6 +136,8 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         activity.setOrganizerId(userId);
         activity.setStatus("pending");
         activity.setCurrentParticipants(0);
+        activity.setCancelRequestReason(null);
+        activity.setRejectReason(null);
 
         this.save(activity);
         return activity;
@@ -160,6 +162,7 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         // 被驳回的活动在修改后重新进入待审核，便于重新演示审核流程
         if ("rejected".equals(currentStatus)) {
             activity.setStatus("pending");
+            activity.setRejectReason(null);
         }
         this.updateById(activity);
         return activity;
@@ -178,7 +181,7 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
     }
 
     @Override
-    public void requestCancelActivity(Long id, Long userId) {
+    public void requestCancelActivity(Long id, Long userId, String cancelRequestReason) {
         Activity activity = this.getById(id);
         if (activity == null) {
             throw new RuntimeException("活动不存在");
@@ -198,14 +201,22 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         if (!"approved".equals(activity.getStatus()) && !"ongoing".equals(activity.getStatus())) {
             throw new RuntimeException("只有已通过或进行中的活动才可申请取消");
         }
+        if (!StringUtils.hasText(cancelRequestReason)) {
+            throw new RuntimeException("请填写取消申请理由");
+        }
         activity.setStatus("cancel_pending");
+        activity.setCancelRequestReason(cancelRequestReason.trim());
+        activity.setRejectReason(null);
         this.updateById(activity);
     }
 
     @Override
-    public void auditActivity(Long id, String status) {
+    public void auditActivity(Long id, String status, String rejectReason) {
         if (!"approved".equals(status) && !"rejected".equals(status)) {
             throw new RuntimeException("审核状态无效");
+        }
+        if ("rejected".equals(status) && !StringUtils.hasText(rejectReason)) {
+            throw new RuntimeException("请填写驳回理由");
         }
         Activity activity = this.getById(id);
         if (activity == null) {
@@ -213,14 +224,17 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         }
         if ("pending".equals(activity.getStatus())) {
             activity.setStatus(status);
+            activity.setRejectReason("rejected".equals(status) ? rejectReason.trim() : null);
             this.updateById(activity);
             return;
         }
         if ("cancel_pending".equals(activity.getStatus())) {
             if ("approved".equals(status)) {
                 activity.setStatus("cancelled");
+                activity.setRejectReason(null);
             } else {
                 activity.setStatus(resolveActiveStatus(activity));
+                activity.setRejectReason(rejectReason.trim());
             }
             this.updateById(activity);
             return;

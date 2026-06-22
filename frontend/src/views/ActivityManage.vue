@@ -120,12 +120,25 @@ function canRequestCancel(activity) {
 // 申请取消活动
 async function handleRequestCancel(activity) {
   try {
-    await ElMessageBox.confirm(
-      `确定申请取消活动“${activity.title}”吗？提交后需要管理员审核。`,
+    const { value } = await ElMessageBox.prompt(
+      `请填写活动“${activity.title}”的取消申请理由，提交后需要管理员审核。`,
       '申请取消活动',
-      { type: 'warning' }
+      {
+        type: 'warning',
+        inputType: 'textarea',
+        inputPlaceholder: '例如：场地临时不可用、活动时间冲突、组织安排调整等',
+        inputValidator: (inputValue) => {
+          if (!inputValue || !inputValue.trim()) {
+            return '请填写取消申请理由'
+          }
+          if (inputValue.trim().length < 4) {
+            return '申请理由至少填写 4 个字'
+          }
+          return true
+        }
+      }
     )
-    await activityApi.requestCancel(activity.id)
+    await activityApi.requestCancel(activity.id, value.trim())
     ElMessage.success('已提交取消申请，等待管理员审核')
     fetchActivities()
     fetchOrganizerStats()
@@ -177,6 +190,16 @@ function statusTagType(status) {
 function formatTime(time) {
   if (!time) return ''
   return time.replace('T', ' ').substring(0, 16)
+}
+
+function latestReason(activity) {
+  if (activity.status === 'cancel_pending' && activity.cancelRequestReason) {
+    return `申请理由：${activity.cancelRequestReason}`
+  }
+  if (activity.rejectReason) {
+    return `驳回理由：${activity.rejectReason}`
+  }
+  return ''
 }
 
 // ===== 组织者统计 =====
@@ -247,8 +270,17 @@ onMounted(() => {
 
     <div v-loading="loading">
       <el-empty v-if="!loading && activities.length === 0" description="你还没有创建活动，点击右上角“发布活动”开始准备演示数据。" />
-      <el-table v-else :data="activities" stripe>
-        <el-table-column label="标题" prop="title" min-width="180" />
+        <el-table v-else :data="activities" stripe>
+          <el-table-column label="标题" min-width="220">
+            <template #default="{ row }">
+              <div class="activity-title-cell">
+                <div class="activity-title-text">{{ row.title }}</div>
+                <div v-if="latestReason(row)" class="activity-reason-text">
+                  {{ latestReason(row) }}
+                </div>
+              </div>
+            </template>
+          </el-table-column>
         <el-table-column label="分类" prop="categoryName" width="100" />
         <el-table-column label="状态" width="80">
           <template #default="{ row }">
@@ -384,6 +416,22 @@ onMounted(() => {
   gap: 8px;
   flex-wrap: nowrap;
   white-space: nowrap;
+}
+
+.activity-title-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.activity-title-text {
+  color: #303133;
+}
+
+.activity-reason-text {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #909399;
 }
 
 @media (max-width: 768px) {

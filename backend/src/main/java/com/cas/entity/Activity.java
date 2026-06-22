@@ -28,6 +28,8 @@ public class Activity {
     private Integer maxParticipants;
     private Integer currentParticipants;
     private String status;   // draft / pending / approved / rejected / ongoing / ended / cancel_pending / cancelled
+    private String cancelRequestReason;
+    private String rejectReason;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

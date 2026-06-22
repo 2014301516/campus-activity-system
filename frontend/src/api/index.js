@@ -15,7 +15,7 @@ export const activityApi = {
   create: (data) => request.post('/activity', data),
   update: (id, data) => request.put(`/activity/${id}`, data),
   delete: (id) => request.delete(`/activity/${id}`),
-  requestCancel: (id) => request.put(`/activity/${id}/cancel-request`)
+  requestCancel: (id, cancelRequestReason) => request.put(`/activity/${id}/cancel-request`, { cancelRequestReason })
 }
 
 // ==================== 报名 ====================
@@ -68,7 +68,7 @@ export const recommendationApi = {
 export const adminApi = {
   getUsers: (params) => request.get('/admin/users', { params }),
   updateUserStatus: (id, status) => request.put(`/admin/users/${id}/status`, { status }),
-  auditActivity: (id, status) => request.put(`/admin/activity/${id}/audit`, { status }),
+  auditActivity: (id, status, rejectReason) => request.put(`/admin/activity/${id}/audit`, { status, rejectReason }),
   cancelActivity: (id) => request.put(`/admin/activity/${id}/cancel`),
   addCategory: (data) => request.post('/admin/category', data),
   deleteCategory: (id) => request.delete(`/admin/category/${id}`),

@@ -120,7 +120,31 @@ async function fetchPendingActivities() {
 
 async function handleAudit(row, status) {
   try {
-    await adminApi.auditActivity(row.id, status)
+    let rejectReason = ''
+    if (status === 'rejected') {
+      const { value } = await ElMessageBox.prompt(
+        row.status === 'cancel_pending'
+          ? `请填写驳回“${row.title}”取消申请的理由`
+          : `请填写驳回活动“${row.title}”的理由`,
+        row.status === 'cancel_pending' ? '驳回取消申请' : '驳回活动',
+        {
+          type: 'warning',
+          inputType: 'textarea',
+          inputPlaceholder: '请填写清晰的驳回理由，组织者会看到这段说明',
+          inputValidator: (inputValue) => {
+            if (!inputValue || !inputValue.trim()) {
+              return '请填写驳回理由'
+            }
+            if (inputValue.trim().length < 4) {
+              return '驳回理由至少填写 4 个字'
+            }
+            return true
+          }
+        }
+      )
+      rejectReason = value.trim()
+    }
+    await adminApi.auditActivity(row.id, status, rejectReason)
     if (row.status === 'cancel_pending') {
       ElMessage.success(status === 'approved' ? '已通过取消申请' : '已驳回取消申请')
     } else {
@@ -335,6 +359,16 @@ function statusTagType(status) {
   return map[status] || 'info'
 }
 
+function auditReasonText(row) {
+  if (row.status === 'cancel_pending') {
+    return row.cancelRequestReason || '未填写'
+  }
+  if (row.status === 'rejected') {
+    return row.rejectReason || '未填写'
+  }
+  return '-'
+}
+
 onMounted(() => {
   fetchStats()
   fetchTrendData()
@@ -480,6 +514,13 @@ onMounted(() => {
                 <el-tag :type="row.status === 'cancel_pending' ? 'warning' : 'info'" size="small">
                   {{ row.status === 'cancel_pending' ? '取消申请' : '发布审核' }}
                 </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="申请/驳回说明" min-width="220">
+              <template #default="{ row }">
+                <div class="audit-reason-cell">
+                  {{ auditReasonText(row) }}
+                </div>
               </template>
             </el-table-column>
             <el-table-column label="时间" min-width="200">
@@ -664,6 +705,12 @@ onMounted(() => {
 .status-count {
   font-weight: 600;
   color: #303133;
+}
+
+.audit-reason-cell {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #606266;
 }
 
 .chart-container {

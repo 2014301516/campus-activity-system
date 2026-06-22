@@ -44,12 +44,12 @@ public interface ActivityService extends IService<Activity> {
     /**
      * 申请取消活动（组织者）
      */
-    void requestCancelActivity(Long id, Long userId);
+    void requestCancelActivity(Long id, Long userId, String cancelRequestReason);
 
     /**
      * 审核活动（管理员）
      */
-    void auditActivity(Long id, String status);
+    void auditActivity(Long id, String status, String rejectReason);
 
     /**
      * 取消活动（管理员）
