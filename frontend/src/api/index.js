@@ -53,7 +53,9 @@ export const noticeApi = {
 export const dashboardApi = {
   getStats: () => request.get('/dashboard/stats'),
   getRegistrationTrend: () => request.get('/dashboard/registration-trend'),
-  getMonthlyActivities: () => request.get('/dashboard/monthly-activities')
+  getMonthlyActivities: () => request.get('/dashboard/monthly-activities'),
+  getMyStats: () => request.get('/dashboard/my-stats'),
+  getOrganizerStats: () => request.get('/dashboard/organizer-stats')
 }
 
 // ==================== AI 推荐 ====================

@@ -1,8 +1,14 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
-import { activityApi, registrationApi, signInApi, categoryApi } from '@/api'
+import { activityApi, registrationApi, signInApi, categoryApi, dashboardApi } from '@/api'
 import { useAuthStore } from '@/store/auth'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import VChart from 'vue-echarts'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { BarChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent } from 'echarts/components'
+use([CanvasRenderer, BarChart, GridComponent, TooltipComponent])
 
 const authStore = useAuthStore()
 const loading = ref(false)
@@ -190,9 +196,31 @@ function formatTime(time) {
   return time.replace('T', ' ').substring(0, 16)
 }
 
+// ===== 组织者统计 =====
+const organizerStats = ref(null)
+
+async function fetchOrganizerStats() {
+  try { const res = await dashboardApi.getOrganizerStats(); organizerStats.value = res.data } catch (e) {}
+}
+
+const topActivityChartOption = computed(() => ({
+  tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+  grid: { left: 100, right: 20, top: 10, bottom: 20 },
+  xAxis: { type: 'value', minInterval: 1 },
+  yAxis: { type: 'category', data: (organizerStats.value?.topActivities || []).map(a => a.title).reverse(),
+           axisLabel: { fontSize: 11 } },
+  series: [{
+    data: (organizerStats.value?.topActivities || []).map(a => a.count).reverse(),
+    type: 'bar',
+    barWidth: '60%',
+    itemStyle: { color: '#409eff', borderRadius: [0, 6, 6, 0] }
+  }]
+}))
+
 onMounted(() => {
   fetchActivities()
   fetchCategories()
+  fetchOrganizerStats()
 })
 </script>
 
@@ -214,6 +242,32 @@ onMounted(() => {
         <div class="stats-value">{{ card.value }}</div>
         <div class="stats-sub">{{ card.sub }}</div>
       </div>
+    </div>
+
+    <!-- 组织者数据概览 -->
+    <div class="org-stats-cards" v-if="organizerStats">
+      <div class="org-stat blue">
+        <div class="org-stat-value">{{ organizerStats.totalActivities }}</div>
+        <div class="org-stat-label">已发布活动</div>
+      </div>
+      <div class="org-stat orange">
+        <div class="org-stat-value">{{ organizerStats.statusStats?.pending || 0 }}</div>
+        <div class="org-stat-label">待审核</div>
+      </div>
+      <div class="org-stat green">
+        <div class="org-stat-value">{{ organizerStats.statusStats?.ongoing || 0 }}</div>
+        <div class="org-stat-label">进行中</div>
+      </div>
+      <div class="org-stat purple">
+        <div class="org-stat-value">{{ organizerStats.totalRegistrations }}</div>
+        <div class="org-stat-label">总报名人次</div>
+      </div>
+    </div>
+
+    <!-- 报名排行 -->
+    <div class="org-chart-wrap" v-if="organizerStats && organizerStats.topActivities?.length">
+      <h4 style="margin-bottom:8px;font-size:14px;color:#606266">活动报名排行</h4>
+      <v-chart :option="topActivityChartOption" :autoresize="true" style="height:260px" />
     </div>
 
     <div v-loading="loading">
@@ -387,5 +441,31 @@ onMounted(() => {
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+/* 组织者统计 */
+.org-stats-cards {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.org-stat {
+  flex: 1;
+  border-radius: 10px;
+  padding: 20px 16px;
+  color: #fff;
+  text-align: center;
+}
+.org-stat .org-stat-value { font-size: 28px; font-weight: 700; }
+.org-stat .org-stat-label { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+.org-stat.blue   { background: linear-gradient(135deg, #409eff, #337ecc); }
+.org-stat.orange { background: linear-gradient(135deg, #e6a23c, #cf9236); }
+.org-stat.green  { background: linear-gradient(135deg, #67c23a, #529b2e); }
+.org-stat.purple { background: linear-gradient(135deg, #a855f7, #9333ea); }
+.org-chart-wrap {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
 }
 </style>

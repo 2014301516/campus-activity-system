@@ -1,8 +1,14 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { registrationApi, signInApi } from '@/api'
+import { registrationApi, signInApi, dashboardApi } from '@/api'
 import { ElMessage } from 'element-plus'
+import VChart from 'vue-echarts'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { PieChart } from 'echarts/charts'
+import { LegendComponent, TooltipComponent } from 'echarts/components'
+use([CanvasRenderer, PieChart, LegendComponent, TooltipComponent])
 
 const router = useRouter()
 const loading = ref(false)
@@ -138,12 +144,53 @@ function canSignOut(row) {
   return !!signInRecord?.signInTime && !signInRecord?.signOutTime
 }
 
-onMounted(fetchData)
+// ===== 个人统计 =====
+const myStats = ref(null)
+
+async function fetchMyStats() {
+  try { const res = await dashboardApi.getMyStats(); myStats.value = res.data } catch (e) {}
+}
+
+const myCatChartOption = computed(() => ({
+  tooltip: { trigger: 'item' },
+  legend: { bottom: 0, textStyle: { fontSize: 11 } },
+  series: [{
+    type: 'pie',
+    radius: ['40%', '70%'],
+    center: ['50%', '45%'],
+    data: (myStats.value?.categoryStats || []).map(c => ({ name: c.name, value: c.count })),
+    label: { formatter: '{b}\n{d}%', fontSize: 11 }
+  }]
+}))
+
+onMounted(() => { fetchData(); fetchMyStats() })
 </script>
 
 <template>
   <div class="page-card">
     <h2>📋 我的报名</h2>
+
+    <!-- 统计卡片 -->
+    <div class="my-stats-row" v-if="myStats">
+      <div class="my-stat-card blue">
+        <div class="my-stat-value">{{ myStats.totalRegistrations }}</div>
+        <div class="my-stat-label">已报名</div>
+      </div>
+      <div class="my-stat-card green">
+        <div class="my-stat-value">{{ myStats.totalSignIns }}</div>
+        <div class="my-stat-label">已签到</div>
+      </div>
+      <div class="my-stat-card orange">
+        <div class="my-stat-value">{{ myStats.totalReviews }}</div>
+        <div class="my-stat-label">已评价</div>
+      </div>
+    </div>
+
+    <!-- 分类占比图 -->
+    <div class="my-chart-wrap" v-if="myStats && myStats.categoryStats?.length">
+      <h4 style="margin-bottom:8px;font-size:14px;color:#606266">我报名的活动分类</h4>
+      <v-chart :option="myCatChartOption" :autoresize="true" style="height:200px" />
+    </div>
 
     <div v-loading="loading">
       <el-empty v-if="!loading && registrations.length === 0" description="暂无报名记录" />
@@ -203,6 +250,31 @@ onMounted(fetchData)
 
 .action-empty {
   color: #c0c4cc;
+}
+
+.my-stats-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.my-stat-card {
+  flex: 1;
+  border-radius: 10px;
+  padding: 20px 16px;
+  color: #fff;
+  text-align: center;
+}
+.my-stat-card .my-stat-value { font-size: 28px; font-weight: 700; }
+.my-stat-card .my-stat-label { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+.my-stat-card.blue   { background: linear-gradient(135deg, #409eff, #337ecc); }
+.my-stat-card.green  { background: linear-gradient(135deg, #67c23a, #529b2e); }
+.my-stat-card.orange { background: linear-gradient(135deg, #e6a23c, #cf9236); }
+
+.my-chart-wrap {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
 }
 
 </style>

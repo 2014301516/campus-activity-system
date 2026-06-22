@@ -2,10 +2,10 @@ package com.cas.controller;
 
 import com.cas.common.Result;
 import com.cas.entity.Activity;
-import com.cas.service.ActivityService;
-import com.cas.service.CategoryService;
-import com.cas.service.RegistrationService;
-import com.cas.service.UserService;
+import com.cas.entity.Review;
+import com.cas.entity.SignIn;
+import com.cas.service.*;
+import com.cas.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,6 +37,15 @@ public class DashboardController {
 
     @Autowired
     private RegistrationService registrationService;
+
+    @Autowired
+    private ReviewService reviewService;
+
+    @Autowired
+    private SignInService signInService;
+
+    @Autowired
+    private SecurityUtil securityUtil;
 
     /**
      * 首页统计数据
@@ -148,5 +157,100 @@ public class DashboardController {
             result.add(m);
         }
         return Result.success(result);
+    }
+
+    /**
+     * 学生个人统计（我的报名、签到、评价情况）
+     */
+    @GetMapping("/dashboard/my-stats")
+    public Result<Map<String, Object>> getMyStats() {
+        Long userId = securityUtil.getCurrentUserId();
+        Map<String, Object> stats = new HashMap<>();
+
+        // 我的报名数
+        stats.put("totalRegistrations", registrationService.lambdaQuery()
+                .eq(Registration::getUserId, userId)
+                .eq(Registration::getStatus, "registered").count());
+
+        // 我的签到数
+        stats.put("totalSignIns", signInService.lambdaQuery()
+                .eq(SignIn::getUserId, userId).count());
+
+        // 我的评价数
+        stats.put("totalReviews", reviewService.lambdaQuery()
+                .eq(Review::getUserId, userId).count());
+
+        // 我报名的活动分类分布
+        List<Registration> myRegs = registrationService.lambdaQuery()
+                .eq(Registration::getUserId, userId)
+                .eq(Registration::getStatus, "registered").list();
+        List<Long> myActivityIds = myRegs.stream().map(Registration::getActivityId).collect(Collectors.toList());
+
+        List<Map<String, Object>> categoryStats = new ArrayList<>();
+        if (!myActivityIds.isEmpty()) {
+            Map<String, Long> catCount = new LinkedHashMap<>();
+            List<Activity> myActivities = activityService.listByIds(myActivityIds);
+            for (Activity a : myActivities) {
+                com.cas.entity.Category cat = categoryService.getById(a.getCategoryId());
+                String catName = cat != null ? cat.getName() : "未知";
+                catCount.merge(catName, 1L, Long::sum);
+            }
+            for (Map.Entry<String, Long> e : catCount.entrySet()) {
+                Map<String, Object> m = new HashMap<>();
+                m.put("name", e.getKey()); m.put("count", e.getValue());
+                categoryStats.add(m);
+            }
+        }
+        stats.put("categoryStats", categoryStats);
+
+        return Result.success(stats);
+    }
+
+    /**
+     * 组织者活动统计（我发布的活动概况）
+     */
+    @GetMapping("/dashboard/organizer-stats")
+    public Result<Map<String, Object>> getOrganizerStats() {
+        Long userId = securityUtil.getCurrentUserId();
+        Map<String, Object> stats = new HashMap<>();
+
+        // 我发布的总数
+        stats.put("totalActivities", activityService.lambdaQuery()
+                .eq(Activity::getOrganizerId, userId).count());
+
+        // 各状态分布
+        Map<String, Long> statusStats = new LinkedHashMap<>();
+        for (String status : new String[]{"pending", "approved", "ongoing", "ended", "rejected", "cancelled"}) {
+            statusStats.put(status, activityService.lambdaQuery()
+                    .eq(Activity::getOrganizerId, userId)
+                    .eq(Activity::getStatus, status).count());
+        }
+        stats.put("statusStats", statusStats);
+
+        // 总报名人次
+        List<Activity> myActivities = activityService.lambdaQuery()
+                .eq(Activity::getOrganizerId, userId).list();
+        long totalRegs = 0;
+        for (Activity a : myActivities) {
+            totalRegs += registrationService.lambdaQuery()
+                    .eq(Registration::getActivityId, a.getId())
+                    .eq(Registration::getStatus, "registered").count();
+        }
+        stats.put("totalRegistrations", totalRegs);
+
+        // 我的活动报名数排名（前10）
+        List<Map<String, Object>> topActivities = myActivities.stream()
+                .map(a -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("title", a.getTitle().length() > 12 ? a.getTitle().substring(0, 12) + "..." : a.getTitle());
+                    m.put("count", a.getCurrentParticipants());
+                    return m;
+                })
+                .sorted((a, b) -> Long.compare((Long) b.get("count"), (Long) a.get("count")))
+                .limit(10)
+                .collect(Collectors.toList());
+        stats.put("topActivities", topActivities);
+
+        return Result.success(stats);
     }
 }
