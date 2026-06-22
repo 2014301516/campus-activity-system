@@ -71,6 +71,10 @@ export const recommendationApi = {
   getList: (mode = 'local') => request.get('/ai/recommendations', { params: { mode } })
 }
 
+export const aiChatApi = {
+  ask: (question, activityId) => request.post('/ai/ask', { question, activityId })
+}
+
 // ==================== 管理员 ====================
 export const adminApi = {
   getUsers: (params) => request.get('/admin/users', { params }),

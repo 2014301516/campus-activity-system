@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { activityApi, categoryApi, noticeApi, dashboardApi, recommendationApi } from '@/api'
+import { activityApi, categoryApi, noticeApi, dashboardApi, recommendationApi, aiChatApi } from '@/api'
 import { useAuthStore } from '@/store/auth'
 
 const router = useRouter()
@@ -147,6 +147,30 @@ async function handleRecommendationModeChange(mode) {
     localStorage.setItem(RECOMMENDATION_MODE_KEY, mode)
   }
   await fetchAiRecommendations(mode)
+}
+
+// ===== AI 问答 =====
+const chatInput = ref('')
+const chatMessages = ref([])
+const chatLoading = ref(false)
+
+const quickQuestions = ['最近有什么适合我的活动？', '哪个活动最热门？', '周末有什么安排？', '帮我推荐一个学术类活动']
+
+async function sendChat(question) {
+  const q = (question || chatInput.value).trim()
+  if (!q || chatLoading.value) return
+  chatMessages.value.push({ role: 'user', content: q })
+  chatInput.value = ''
+  chatLoading.value = true
+  try {
+    const res = await aiChatApi.ask(q)
+    chatMessages.value.push({ role: 'ai', content: res.data.answer, source: res.data.source })
+  } catch (e) {
+    chatMessages.value.push({ role: 'ai', content: '抱歉，AI 暂时无法回复，请稍后再试。', source: 'error' })
+  } finally {
+    chatLoading.value = false
+    if (chatMessages.value.length > 10) chatMessages.value = chatMessages.value.slice(-10)
+  }
 }
 
 function handleSearch() {
@@ -539,6 +563,22 @@ onBeforeUnmount(() => {
               <span><el-icon><User /></el-icon>{{ activity.currentParticipants }}/{{ activity.maxParticipants }}</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- AI 问答 -->
+      <div class="ai-chat-section">
+        <div class="chat-messages" v-if="chatMessages.length > 0">
+          <div v-for="(m, i) in chatMessages" :key="i" class="chat-msg" :class="m.role">
+            <div class="chat-bubble">{{ m.content }}</div>
+          </div>
+        </div>
+        <div class="quick-questions">
+          <el-button v-for="q in quickQuestions" :key="q" size="small" text @click="sendChat(q)">{{ q }}</el-button>
+        </div>
+        <div class="chat-input-row">
+          <el-input v-model="chatInput" placeholder="问 AI 关于活动的问题..." @keyup.enter="sendChat()" :disabled="chatLoading" />
+          <el-button type="primary" :loading="chatLoading" @click="sendChat()" :disabled="!chatInput.trim()">发送</el-button>
         </div>
       </div>
     </section>
@@ -960,6 +1000,18 @@ onBeforeUnmount(() => {
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
 }
+
+/* AI 问答聊天 */
+.ai-chat-section { border-top: 1px solid #e4e7ed; padding-top: 20px; margin-top: 20px; }
+.chat-messages { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; max-height: 300px; overflow-y: auto; }
+.chat-msg { display: flex; }
+.chat-msg.user { justify-content: flex-end; }
+.chat-msg.user .chat-bubble { background: #409eff; color: #fff; border-radius: 14px 14px 4px 14px; }
+.chat-msg.ai .chat-bubble { background: #f0f2f5; color: #303133; border-radius: 14px 14px 14px 4px; }
+.chat-bubble { max-width: 380px; padding: 10px 16px; font-size: 14px; line-height: 1.6; }
+.quick-questions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.chat-input-row { display: flex; gap: 8px; }
+.chat-input-row .el-input { flex: 1; }
 
 .recommendation-mode-switch {
   display: flex;
