@@ -37,7 +37,8 @@ export const signInApi = {
 // ==================== 评价 ====================
 export const reviewApi = {
   submit: (data) => request.post('/review', data),
-  getActivityReviews: (activityId) => request.get(`/review/activity/${activityId}`)
+  getActivityReviews: (activityId) => request.get(`/review/activity/${activityId}`),
+  delete: (reviewId) => request.delete(`/review/${reviewId}`)
 }
 
 // ==================== 分类 ====================

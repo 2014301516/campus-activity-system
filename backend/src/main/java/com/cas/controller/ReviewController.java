@@ -44,4 +44,11 @@ public class ReviewController {
     public Result<List<Review>> activityReviews(@PathVariable Long activityId) {
         return Result.success(reviewService.getActivityReviews(activityId));
     }
+
+    @DeleteMapping("/review/{reviewId}")
+    public Result<?> deleteReview(@PathVariable Long reviewId) {
+        Long userId = securityUtil.getCurrentUserId();
+        reviewService.deleteReview(reviewId, userId);
+        return Result.success("删除成功");
+    }
 }

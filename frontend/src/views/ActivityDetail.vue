@@ -127,6 +127,14 @@ async function submitReview() {
   } catch (e) { /* ignore */ }
 }
 
+async function deleteReview(reviewId) {
+  try {
+    await reviewApi.delete(reviewId)
+    ElMessage.success('已删除')
+    fetchReviews()
+  } catch (e) { /* ignore */ }
+}
+
 function formatTime(time) {
   if (!time) return ''
   return time.replace('T', ' ').substring(0, 16)
@@ -440,7 +448,11 @@ onMounted(() => {
         <div v-for="review in reviews" :key="review.id" class="review-item">
           <div class="review-header">
             <span class="review-user">{{ review.userName }}</span>
-            <el-rate v-model="review.rating" disabled show-score size="small" />
+            <div style="display:flex;align-items:center;gap:8px">
+              <el-rate v-model="review.rating" disabled show-score size="small" />
+              <el-button v-if="review.userId === authStore.userInfo?.userId"
+                size="small" type="danger" text @click="deleteReview(review.id)">删除</el-button>
+            </div>
           </div>
           <p class="review-comment">{{ review.comment }}</p>
           <span class="review-time">{{ formatTime(review.createdAt) }}</span>

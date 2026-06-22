@@ -19,4 +19,6 @@ public interface ReviewService extends IService<Review> {
      * 获取活动评价列表
      */
     List<Review> getActivityReviews(Long activityId);
+
+    void deleteReview(Long reviewId, Long userId);
 }

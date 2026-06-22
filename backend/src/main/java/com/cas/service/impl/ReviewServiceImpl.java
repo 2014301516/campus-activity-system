@@ -86,4 +86,16 @@ public class ReviewServiceImpl extends ServiceImpl<ReviewMapper, Review> impleme
 
         return list;
     }
+
+    @Override
+    public void deleteReview(Long reviewId, Long userId) {
+        Review review = this.getById(reviewId);
+        if (review == null) {
+            throw new RuntimeException("评价不存在");
+        }
+        if (!review.getUserId().equals(userId)) {
+            throw new RuntimeException("只能删除自己的评价");
+        }
+        this.removeById(reviewId);
+    }
 }
