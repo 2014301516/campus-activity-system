@@ -74,7 +74,7 @@ function handleLogout() {
             <el-menu-item v-if="authStore.role === 'admin'" index="/admin">后台管理</el-menu-item>
           </el-menu>
           <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99" class="notify-badge">
-            <el-button :icon="Bell" circle @click="$router.push('/notifications')" />
+            <el-button :icon="Bell" circle :type="route.path === '/notifications' ? 'primary' : 'default'" @click="$router.push('/notifications')" />
           </el-badge>
           <el-dropdown class="user-dropdown">
             <span class="user-info">
