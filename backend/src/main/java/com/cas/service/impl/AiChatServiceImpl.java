@@ -32,7 +32,7 @@ public class AiChatServiceImpl implements AiChatService {
     private static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("MM月dd日 HH:mm");
 
     @Override
-    public Map<String, Object> ask(Long userId, String question, Long activityId, List<Map<String, String>> messages) {
+    public Map<String, Object> ask(Long userId, String question, Long activityId, List<Map<String, String>> messages, String page) {
         if (!StringUtils.hasText(deepSeek.getApiKey())) {
             Map<String, Object> fallback = new HashMap<>();
             fallback.put("answer", "AI 问答功能尚未配置 DeepSeek API Key，请参考文档设置后重试。");
@@ -43,7 +43,7 @@ public class AiChatServiceImpl implements AiChatService {
         List<Map<String, String>> msgs = new ArrayList<>();
 
         // 系统提示 + 上下文
-        String context = buildContext(userId, activityId);
+        String context = buildContext(userId, activityId, page);
         msgs.add(Map.of("role", "system", "content", "你是校园活动助手，回答简短（200字内），可使用Markdown。\n\n" + context));
 
         // 历史消息
@@ -71,7 +71,7 @@ public class AiChatServiceImpl implements AiChatService {
         }
     }
 
-    private String buildContext(Long userId, Long activityId) {
+    private String buildContext(Long userId, Long activityId, String page) {
         StringBuilder sb = new StringBuilder();
 
         // 用户画像
@@ -96,6 +96,26 @@ public class AiChatServiceImpl implements AiChatService {
                   .append(" ~ ").append(a.getEndTime().format(DTF))
                   .append("，已报名 ").append(a.getCurrentParticipants())
                   .append("/").append(a.getMaxParticipants()).append("）\n\n");
+            }
+        }
+
+        // 页面上下文
+        if (page != null) {
+            sb.append("【当前页面】").append(page).append("\n");
+            if ("manage".equals(page)) {
+                List<Activity> myActs = activityService.lambdaQuery().eq(Activity::getOrganizerId, userId).list();
+                sb.append("你发布的活动共").append(myActs.size()).append("个：\n");
+                for (Activity a : myActs) {
+                    sb.append("· ").append(a.getTitle()).append(" [").append(a.getStatus()).append("] 报名").append(a.getCurrentParticipants()).append("/").append(a.getMaxParticipants()).append("\n");
+                }
+            } else if ("admin".equals(page)) {
+                long total = activityService.count();
+                long pending = activityService.lambdaQuery().eq(Activity::getStatus, "pending").count();
+                long users = userService.count();
+                sb.append("系统概况：活动总数").append(total).append("，待审核").append(pending).append("，用户总数").append(users).append("\n");
+            } else if ("my-activities".equals(page)) {
+                long myReg = registrationService.lambdaQuery().eq(Registration::getUserId, userId).eq(Registration::getStatus, "registered").count();
+                sb.append("你已报名").append(myReg).append("个活动\n");
             }
         }
 
