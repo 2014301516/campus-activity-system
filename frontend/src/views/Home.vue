@@ -371,11 +371,6 @@ onBeforeUnmount(() => {
         </el-carousel-item>
       </el-carousel>
 
-      <div class="hero-data-strip">
-        <div class="hero-data-item"><strong>{{ stats.totalActivities || 0 }}</strong><span>活动总数</span></div>
-        <div class="hero-data-item"><strong>{{ stats.ongoingActivities || 0 }}</strong><span>进行中活动</span></div>
-        <div class="hero-data-item"><strong>{{ notices.length }}</strong><span>最新公告</span></div>
-      </div>
     </section>
 
     <section class="stats-grid">
