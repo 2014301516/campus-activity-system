@@ -32,7 +32,6 @@ public class AiChatServiceImpl implements AiChatService {
     private static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("MM月dd日 HH:mm");
 
     @Override
-    @Override
     public Map<String, Object> ask(Long userId, String question, Long activityId, List<Map<String, String>> messages) {
         if (!StringUtils.hasText(deepSeek.getApiKey())) {
             Map<String, Object> fallback = new HashMap<>();
