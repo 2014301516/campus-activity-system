@@ -251,7 +251,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
             requestBody.put("thinking", Map.of("type", "disabled"));
             requestBody.put("messages", List.of(
                     Map.of("role", "system", "content",
-                            "你是校园活动推荐助手。请严格返回 JSON，不要输出额外解释。"),
+                            "你是校园活动推荐助手，正在为学生首页生成推荐文案。你的语气要自然、具体、像在给同学提建议，而不是写系统分析报告。请严格返回 JSON，不要输出额外解释。"),
                     Map.of("role", "user", "content", prompt)
             ));
 
@@ -441,7 +441,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
     private String buildPrompt(UserPreferenceProfile profile, List<ScoredActivity> rankedCandidates) throws Exception {
         Map<String, Object> promptObject = new LinkedHashMap<>();
-        promptObject.put("task", "你是校园活动智能推荐助手，请结合用户画像，为候选活动生成自然、有温度、像助手对用户说话的推荐文案。");
+        promptObject.put("task", "请为首页 AI 推荐卡片生成更像真实推荐助手的文案。读起来要像在对学生说话，而不是在输出系统规则说明。");
         promptObject.put("output_format",
                 "返回 JSON 对象，格式为 {\"items\":[{\"activityId\":1,\"reason\":\"...\",\"analysis\":\"...\",\"tag\":\"...\",\"highlights\":[\"...\",\"...\"]}]}，tag 只允许使用：兴趣匹配、时间合适、热度较高、AI精选、值得尝试。");
         promptObject.put("user_profile", profile.historySummary);
@@ -463,13 +463,24 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
         }).collect(Collectors.toList());
         promptObject.put("candidates", candidates);
         promptObject.put("requirements", List.of(
-                "reason 控制在32到56字之间，语气像智能助手在给用户建议，可以使用“你最近”“看起来你会更适合”“如果你想”这类自然表达",
-                "analysis 控制在36到72字之间，要像解释“为什么推荐你”，尽量结合用户偏好、时间、地点、热度中的至少两项",
-                "reason 不要写成系统说明书，不要使用“根据数据分析得出”这类生硬措辞",
-                "不同活动的 reason 和 analysis 开头尽量不要重复，避免多个候选活动出现相同句式",
-                "highlights 返回 2 到 3 条短语，每条控制在4到10字之间",
-                "优先强调用户兴趣、时间匹配度、活动热度或新鲜度，突出“为什么推荐你”",
-                "不要杜撰不存在的个人信息，不要使用绝对化措辞"
+                "reason 控制在30到50字之间，要像首页推荐语，简短自然，像在对学生说话，可以使用“如果你最近想”“这场会比较适合你”“可以优先看看”这类表达",
+                "analysis 控制在38到68字之间，要像解释推荐原因，必须结合至少两个具体信息：兴趣方向、时间段、地点、报名热度中的任意两项或以上",
+                "不要使用“根据分析”“较为”“虽非”“属性接近”“匹配度较高”“综合来看”等生硬书面化表达",
+                "不同活动的 reason 和 analysis 开头尽量不同，避免四条文案像同一模板改词",
+                "优先写出具体感受，例如“下午去信息楼参加讲座比较顺手”“晚上在西操场活动氛围更强”这类表达",
+                "可以提活动标题、地点、时间、热度，但不要机械罗列参数，不要把句子写成报表",
+                "highlights 返回 2 到 3 条短语，每条控制在4到10字之间，风格口语化，例如“讲座方向对口”“晚上更好安排”“报名热度不错”",
+                "不要杜撰不存在的个人信息，不要使用绝对化措辞，不要夸张承诺"
+        ));
+        promptObject.put("style_examples", List.of(
+                Map.of(
+                        "good_reason", "如果你最近还想参加讲座，这场数据分析沙龙会比较对你的胃口，可以优先看看。",
+                        "good_analysis", "你最近参加过学术讲座，这场又安排在信息楼的下午时段，而且已经有不少同学报名，去参与会比较顺手。"
+                ),
+                Map.of(
+                        "good_reason", "如果你想找一场氛围更轻松的活动，这场夜跑会是个不错的选择。",
+                        "good_analysis", "它安排在晚上西操场，参与门槛不高，现场人也会比较多，适合作为最近放松一下的活动。"
+                )
         ));
 
         return objectMapper.writeValueAsString(promptObject);
