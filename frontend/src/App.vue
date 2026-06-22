@@ -55,7 +55,24 @@ const chatVisible = ref(false)
 const chatInput = ref('')
 const chatMessages = ref([])
 const chatLoading = ref(false)
-const quickQuestions = ['最近有什么活动？', '哪个活动最热门？', '帮我推荐活动', '有什么适合我的？']
+const quickQuestions = computed(() => {
+  const r = authStore.role
+  const p = route.path
+  if (r === 'student') {
+    if (p.includes('/activity/')) return ['这个活动适合我吗？', '还有类似的活动吗？', '怎么报名？']
+    if (p === '/my-activities') return ['我的签到状态？', '怎么取消报名？', '还有什么推荐？']
+    return ['最近有什么活动？', '哪个活动最热门？', '帮我推荐活动', '周末有什么？']
+  }
+  if (r === 'organizer') {
+    if (p === '/manage') return ['怎么提高报名人数？', '我的活动审核状态？', '怎么发布活动？']
+    return ['怎么发布活动？', '如何管理报名？', '怎么看签到记录？']
+  }
+  if (r === 'admin') {
+    if (p === '/admin') return ['有待审核的活动吗？', '系统运行情况怎么样？', '最近报名趋势如何？']
+    return ['系统概况怎么样？', '有待审核的吗？', '用户活跃度如何？']
+  }
+  return ['最近有什么活动？', '哪个活动最热门？']
+})
 
 function renderMd(text) {
   if (!text) return ''

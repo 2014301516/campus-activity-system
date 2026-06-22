@@ -43,8 +43,10 @@ public class AiChatServiceImpl implements AiChatService {
         List<Map<String, String>> msgs = new ArrayList<>();
 
         // 系统提示 + 上下文
+        String role = userService.getById(userId).getRole();
         String context = buildContext(userId, activityId, page);
-        msgs.add(Map.of("role", "system", "content", "你是校园活动助手，回答简短（200字内），可使用Markdown。\n\n" + context));
+        String systemPrompt = buildSystemPrompt(role, page) + "\n\n" + context;
+        msgs.add(Map.of("role", "system", "content", systemPrompt));
 
         // 历史消息
         if (messages != null) {
@@ -136,6 +138,22 @@ public class AiChatServiceImpl implements AiChatService {
         }
 
         return sb.toString();
+    }
+
+    private String buildSystemPrompt(String role, String page) {
+        String base = "你是校园活动管理系统助手。回答简短（200字内），可使用Markdown。";
+        if ("student".equals(role)) {
+            if ("my-activities".equals(page)) return base + "用户是学生，正在查看自己的报名记录。帮助查看报名状态、签到时间、取消报名等问题。";
+            if ("home".equals(page)) return base + "用户是学生，正在浏览首页。帮助推荐活动、搜索活动、介绍活动详情。";
+            return base + "用户是学生。帮助推荐活动、报名、签到等问题。";
+        } else if ("organizer".equals(role)) {
+            if ("manage".equals(page)) return base + "用户是活动组织者，正在管理自己发布的活动。帮助分析报名情况、指导如何提高报名人数、查看审核状态。";
+            return base + "用户是活动组织者。帮助发布活动、管理报名、查看签到统计。";
+        } else if ("admin".equals(role)) {
+            if ("admin".equals(page)) return base + "用户是系统管理员，正在后台管理页面。帮助了解系统概况、指导审核流程、查看数据统计。";
+            return base + "用户是系统管理员。帮助审核活动、管理用户和分类、查看数据统计。";
+        }
+        return base;
     }
 
     private String callDeepSeek(List<Map<String, String>> messages) {
