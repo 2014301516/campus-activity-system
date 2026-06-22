@@ -176,18 +176,20 @@ onMounted(() => {
 
       <div style="margin-top:20px">
     <!-- 消息通知 -->
-    <div v-if="notifications.length > 0" class="notif-section" style="margin-top:24px">
+    <div class="notif-section" style="margin-top:24px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <h3 style="font-size:16px">🔔 消息通知</h3>
-        <el-button size="small" text @click="markAllRead">全部已读</el-button>
+        <el-button v-if="notifications.filter(n=>n.isRead===0).length>0" size="small" text @click="markAllRead">全部已读</el-button>
       </div>
       <div v-loading="notifLoading">
+        <div v-if="notifications.length === 0" style="text-align:center;padding:16px;color:#c0c4cc">暂无消息</div>
         <div v-for="n in notifications" :key="n.id" class="notif-item" :class="{ unread: n.isRead === 0 }">
           <div class="notif-header">
             <span class="notif-title">{{ n.title }}</span>
             <span class="notif-time">{{ n.createdAt }}</span>
           </div>
           <div class="notif-content">{{ n.content }}</div>
+          <el-tag v-if="n.isRead===0" size="small" type="danger" effect="plain">未读</el-tag>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { useAuthStore } from './store/auth'
 import { useRouter, useRoute } from 'vue-router'
 import { computed, ref, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Bell } from '@element-plus/icons-vue'
 import { notificationApi } from './api'
 
 const authStore = useAuthStore()
