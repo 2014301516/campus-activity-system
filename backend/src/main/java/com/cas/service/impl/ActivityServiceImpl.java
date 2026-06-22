@@ -117,12 +117,21 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
             return;
         }
 
+        // 已结束的 → ended
         this.lambdaUpdate()
                 .set(Activity::getStatus, "ended")
                 .in(Activity::getStatus, "approved", "ongoing")
                 .le(Activity::getEndTime, now)
                 .update();
 
+        // 未到开始时间却被标为进行中的 → 退回 approved
+        this.lambdaUpdate()
+                .set(Activity::getStatus, "approved")
+                .eq(Activity::getStatus, "ongoing")
+                .gt(Activity::getStartTime, now)
+                .update();
+
+        // 到达开始时间的 → ongoing
         this.lambdaUpdate()
                 .set(Activity::getStatus, "ongoing")
                 .eq(Activity::getStatus, "approved")
