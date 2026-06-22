@@ -74,4 +74,14 @@ public class ActivityController {
         activityService.deleteActivity(id, userId);
         return Result.success("删除成功");
     }
+
+    /**
+     * 申请取消活动（组织者）
+     */
+    @PutMapping("/activity/{id}/cancel-request")
+    public Result<?> requestCancel(@PathVariable Long id) {
+        Long userId = securityUtil.getCurrentUserId();
+        activityService.requestCancelActivity(id, userId);
+        return Result.success("已提交取消申请，等待管理员审核");
+    }
 }

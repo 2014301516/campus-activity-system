@@ -178,6 +178,31 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
     }
 
     @Override
+    public void requestCancelActivity(Long id, Long userId) {
+        Activity activity = this.getById(id);
+        if (activity == null) {
+            throw new RuntimeException("活动不存在");
+        }
+        if (!canManageActivity(activity, userId)) {
+            throw new RuntimeException("无权申请取消此活动");
+        }
+        if ("cancel_pending".equals(activity.getStatus())) {
+            throw new RuntimeException("取消申请已提交，请勿重复操作");
+        }
+        if ("cancelled".equals(activity.getStatus())) {
+            throw new RuntimeException("活动已取消，请勿重复操作");
+        }
+        if ("ended".equals(activity.getStatus())) {
+            throw new RuntimeException("已结束的活动不能申请取消");
+        }
+        if (!"approved".equals(activity.getStatus()) && !"ongoing".equals(activity.getStatus())) {
+            throw new RuntimeException("只有已通过或进行中的活动才可申请取消");
+        }
+        activity.setStatus("cancel_pending");
+        this.updateById(activity);
+    }
+
+    @Override
     public void auditActivity(Long id, String status) {
         if (!"approved".equals(status) && !"rejected".equals(status)) {
             throw new RuntimeException("审核状态无效");
@@ -186,11 +211,32 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         if (activity == null) {
             throw new RuntimeException("活动不存在");
         }
-        if (!"pending".equals(activity.getStatus())) {
-            throw new RuntimeException("只能审核待审核状态的活动");
+        if ("pending".equals(activity.getStatus())) {
+            activity.setStatus(status);
+            this.updateById(activity);
+            return;
         }
-        activity.setStatus(status);
-        this.updateById(activity);
+        if ("cancel_pending".equals(activity.getStatus())) {
+            if ("approved".equals(status)) {
+                activity.setStatus("cancelled");
+            } else {
+                activity.setStatus(resolveActiveStatus(activity));
+            }
+            this.updateById(activity);
+            return;
+        }
+        throw new RuntimeException("只能审核待审核或取消待审核状态的活动");
+    }
+
+    private String resolveActiveStatus(Activity activity) {
+        LocalDateTime now = LocalDateTime.now();
+        if (activity.getEndTime() != null && !activity.getEndTime().isAfter(now)) {
+            return "ended";
+        }
+        if (activity.getStartTime() != null && !activity.getStartTime().isAfter(now)) {
+            return "ongoing";
+        }
+        return "approved";
     }
 
     @Override

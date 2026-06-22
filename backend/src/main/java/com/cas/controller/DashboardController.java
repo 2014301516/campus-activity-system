@@ -78,7 +78,7 @@ public class DashboardController {
 
         // 各状态活动数（含全部状态）
         Map<String, Long> statusStats = new HashMap<>();
-        for (String status : new String[]{"draft", "pending", "approved", "rejected", "ongoing", "ended", "cancelled"}) {
+        for (String status : new String[]{"draft", "pending", "approved", "rejected", "ongoing", "ended", "cancel_pending", "cancelled"}) {
             statusStats.put(status, activityService.lambdaQuery()
                     .eq(Activity::getStatus, status).count());
         }
@@ -220,7 +220,7 @@ public class DashboardController {
 
         // 各状态分布
         Map<String, Long> statusStats = new LinkedHashMap<>();
-        for (String status : new String[]{"pending", "approved", "ongoing", "ended", "rejected", "cancelled"}) {
+        for (String status : new String[]{"pending", "approved", "ongoing", "ended", "rejected", "cancel_pending", "cancelled"}) {
             statusStats.put(status, activityService.lambdaQuery()
                     .eq(Activity::getOrganizerId, userId)
                     .eq(Activity::getStatus, status).count());

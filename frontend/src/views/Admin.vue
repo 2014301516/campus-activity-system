@@ -110,16 +110,22 @@ const auditLoading = ref(false)
 async function fetchPendingActivities() {
   auditLoading.value = true
   try {
-    const res = await activityApi.getList({ status: 'pending', size: 50 })
-    pendingActivities.value = res.data.records || []
+    const res = await activityApi.getList({ includeAll: true, size: 100 })
+    pendingActivities.value = (res.data.records || []).filter(item =>
+      item.status === 'pending' || item.status === 'cancel_pending'
+    )
   } catch (e) { /* ignore */ }
   finally { auditLoading.value = false }
 }
 
-async function handleAudit(id, status) {
+async function handleAudit(row, status) {
   try {
-    await adminApi.auditActivity(id, status)
-    ElMessage.success(status === 'approved' ? '已通过审核' : '已驳回')
+    await adminApi.auditActivity(row.id, status)
+    if (row.status === 'cancel_pending') {
+      ElMessage.success(status === 'approved' ? '已通过取消申请' : '已驳回取消申请')
+    } else {
+      ElMessage.success(status === 'approved' ? '已通过审核' : '已驳回')
+    }
     fetchStats()
     fetchPendingActivities()
     fetchAllActivities()
@@ -161,7 +167,7 @@ function handleAllActivityPageChange(page) {
 }
 
 function canCancelActivity(row) {
-  return row.status !== 'ended' && row.status !== 'cancelled'
+  return row.status !== 'ended' && row.status !== 'cancelled' && row.status !== 'cancel_pending'
 }
 
 async function handleCancelActivity(row) {
@@ -258,6 +264,7 @@ function statusLabel(status) {
     rejected: '已驳回',
     ongoing: '进行中',
     ended: '已结束',
+    cancel_pending: '取消待审核',
     cancelled: '已取消'
   }
   return map[status] || status
@@ -270,6 +277,7 @@ const statusColorMap = {
   rejected: '#f56c6c',
   ongoing: '#409eff',
   ended: '#c0c4cc',
+  cancel_pending: '#ebb563',
   cancelled: '#a8abb2'
 }
 
@@ -321,6 +329,7 @@ function statusTagType(status) {
     draft: 'info',
     ongoing: 'primary',
     ended: 'info',
+    cancel_pending: 'warning',
     cancelled: 'info'
   }
   return map[status] || 'info'
@@ -461,18 +470,29 @@ onMounted(() => {
       <!-- 活动审核 -->
       <el-tab-pane label="活动审核" name="audit">
         <div v-loading="auditLoading">
-          <el-empty v-if="pendingActivities.length === 0" description="暂无待审核活动" />
+          <el-empty v-if="pendingActivities.length === 0" description="暂无待审核活动或取消申请" />
           <el-table v-else :data="pendingActivities" stripe>
             <el-table-column label="标题" prop="title" min-width="180" />
             <el-table-column label="分类" prop="categoryName" width="100" />
             <el-table-column label="组织者" prop="organizerName" width="100" />
+            <el-table-column label="审核类型" width="110">
+              <template #default="{ row }">
+                <el-tag :type="row.status === 'cancel_pending' ? 'warning' : 'info'" size="small">
+                  {{ row.status === 'cancel_pending' ? '取消申请' : '发布审核' }}
+                </el-tag>
+              </template>
+            </el-table-column>
             <el-table-column label="时间" min-width="200">
               <template #default="{ row }">{{ formatTime(row.startTime) }} ~ {{ formatTime(row.endTime) }}</template>
             </el-table-column>
             <el-table-column label="操作" width="200">
               <template #default="{ row }">
-                <el-button size="small" type="success" @click="handleAudit(row.id, 'approved')">通过</el-button>
-                <el-button size="small" type="danger" @click="handleAudit(row.id, 'rejected')">驳回</el-button>
+                <el-button size="small" type="success" @click="handleAudit(row, 'approved')">
+                  {{ row.status === 'cancel_pending' ? '同意取消' : '通过' }}
+                </el-button>
+                <el-button size="small" type="danger" @click="handleAudit(row, 'rejected')">
+                  {{ row.status === 'cancel_pending' ? '驳回申请' : '驳回' }}
+                </el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -489,6 +509,7 @@ onMounted(() => {
             <el-option label="已驳回" value="rejected" />
             <el-option label="进行中" value="ongoing" />
             <el-option label="已结束" value="ended" />
+            <el-option label="取消待审核" value="cancel_pending" />
             <el-option label="已取消" value="cancelled" />
           </el-select>
         </div>

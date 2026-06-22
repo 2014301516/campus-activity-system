@@ -49,33 +49,6 @@ const viewActivityTitle = ref('')
 const showRegDialog = ref(false)
 const showSignDialog = ref(false)
 
-const activityStats = computed(() => {
-  const list = activities.value || []
-  const totalParticipants = list.reduce((sum, item) => sum + (item.currentParticipants || 0), 0)
-  return [
-    {
-      label: '我的活动',
-      value: list.length,
-      sub: '当前账号创建的活动总数'
-    },
-    {
-      label: '待审核',
-      value: list.filter(item => item.status === 'pending').length,
-      sub: '等待管理员处理'
-    },
-    {
-      label: '进行中',
-      value: list.filter(item => item.status === 'ongoing').length,
-      sub: '正在执行的活动'
-    },
-    {
-      label: '累计报名',
-      value: totalParticipants,
-      sub: '全部活动当前报名人数'
-    }
-  ]
-})
-
 async function fetchActivities() {
   loading.value = true
   try {
@@ -140,13 +113,22 @@ async function handleSubmit() {
   })
 }
 
-// 删除
-async function handleDelete(id) {
+function canRequestCancel(activity) {
+  return activity.status === 'approved' || activity.status === 'ongoing'
+}
+
+// 申请取消活动
+async function handleRequestCancel(activity) {
   try {
-    await ElMessageBox.confirm('确定要删除该活动吗？', '确认删除', { type: 'warning' })
-    await activityApi.delete(id)
-    ElMessage.success('删除成功')
+    await ElMessageBox.confirm(
+      `确定申请取消活动“${activity.title}”吗？提交后需要管理员审核。`,
+      '申请取消活动',
+      { type: 'warning' }
+    )
+    await activityApi.requestCancel(activity.id)
+    ElMessage.success('已提交取消申请，等待管理员审核')
     fetchActivities()
+    fetchOrganizerStats()
   } catch (e) { /* ignore */ }
 }
 
@@ -174,7 +156,7 @@ async function viewSignIns(activity) {
 
 // 状态标签
 function statusLabel(s) {
-  const map = { draft: '草稿', pending: '待审核', approved: '已通过', rejected: '已驳回', ongoing: '进行中', ended: '已结束', cancelled: '已取消' }
+  const map = { draft: '草稿', pending: '待审核', approved: '已通过', rejected: '已驳回', ongoing: '进行中', ended: '已结束', cancel_pending: '取消待审核', cancelled: '已取消' }
   return map[s] || s
 }
 
@@ -185,6 +167,7 @@ function statusTagType(status) {
     rejected: 'danger',
     ongoing: 'primary',
     ended: 'info',
+    cancel_pending: 'warning',
     cancelled: 'info',
     draft: 'info'
   }
@@ -236,14 +219,6 @@ onMounted(() => {
       </el-button>
     </div>
 
-    <div class="stats-grid">
-      <div v-for="card in activityStats" :key="card.label" class="stats-card">
-        <div class="stats-label">{{ card.label }}</div>
-        <div class="stats-value">{{ card.value }}</div>
-        <div class="stats-sub">{{ card.sub }}</div>
-      </div>
-    </div>
-
     <!-- 组织者数据概览 -->
     <div class="org-stats-cards" v-if="organizerStats">
       <div class="org-stat blue">
@@ -251,7 +226,7 @@ onMounted(() => {
         <div class="org-stat-label">已发布活动</div>
       </div>
       <div class="org-stat orange">
-        <div class="org-stat-value">{{ organizerStats.statusStats?.pending || 0 }}</div>
+        <div class="org-stat-value">{{ (organizerStats.statusStats?.pending || 0) + (organizerStats.statusStats?.cancel_pending || 0) }}</div>
         <div class="org-stat-label">待审核</div>
       </div>
       <div class="org-stat green">
@@ -288,12 +263,22 @@ onMounted(() => {
         <el-table-column label="开始时间" width="140">
           <template #default="{ row }">{{ formatTime(row.startTime) }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="280">
+        <el-table-column label="操作" width="390">
           <template #default="{ row }">
-            <el-button size="small" @click="openEdit(row)" :disabled="row.status === 'ended'">编辑</el-button>
-            <el-button size="small" @click="viewRegistrations(row)">报名名单</el-button>
-            <el-button size="small" @click="viewSignIns(row)">签到</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row.id)">删除</el-button>
+            <div class="action-buttons">
+              <el-button size="small" @click="openEdit(row)" :disabled="row.status === 'ended' || row.status === 'cancelled' || row.status === 'cancel_pending'">编辑</el-button>
+              <el-button size="small" @click="viewRegistrations(row)">报名名单</el-button>
+              <el-button size="small" @click="viewSignIns(row)">签到签退记录</el-button>
+              <el-button
+                size="small"
+                type="danger"
+                plain
+                :disabled="row.status === 'cancel_pending' || !canRequestCancel(row)"
+                @click="handleRequestCancel(row)"
+              >
+                {{ row.status === 'cancel_pending' ? '取消审核中' : '申请取消' }}
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -363,7 +348,7 @@ onMounted(() => {
     </el-dialog>
 
     <!-- 签到记录对话框 -->
-    <el-dialog v-model="showSignDialog" :title="'签到记录 - ' + viewActivityTitle" width="560px">
+    <el-dialog v-model="showSignDialog" :title="'签到签退记录 - ' + viewActivityTitle" width="560px">
       <el-empty v-if="signIns.length === 0" description="当前还没有签到记录，活动开始后再回来查看。" />
       <el-table v-else :data="signIns" stripe max-height="400">
         <el-table-column label="姓名" prop="userName" />
@@ -393,50 +378,15 @@ onMounted(() => {
   line-height: 1.7;
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.stats-card {
-  padding: 18px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
-  border: 1px solid #e8f1ff;
-}
-
-.stats-label {
-  color: #909399;
-  font-size: 13px;
-}
-
-.stats-value {
-  margin-top: 6px;
-  font-size: 30px;
-  font-weight: 700;
-  color: #303133;
-}
-
-.stats-sub {
-  margin-top: 8px;
-  color: #909399;
-  font-size: 12px;
-}
-
-@media (max-width: 1100px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {
-  .manage-header,
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
   .manage-header {
     flex-direction: column;
     align-items: stretch;

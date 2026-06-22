@@ -14,7 +14,8 @@ export const activityApi = {
   getDetail: (id) => request.get(`/activity/${id}`),
   create: (data) => request.post('/activity', data),
   update: (id, data) => request.put(`/activity/${id}`, data),
-  delete: (id) => request.delete(`/activity/${id}`)
+  delete: (id) => request.delete(`/activity/${id}`),
+  requestCancel: (id) => request.put(`/activity/${id}/cancel-request`)
 }
 
 // ==================== 报名 ====================
