@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
-import { adminApi, activityApi, categoryApi, noticeApi, dashboardApi } from '@/api'
+import { adminApi, activityApi, categoryApi, noticeApi, dashboardApi, aiChatApi } from '@/api'
 import { useAuthStore } from '@/store/auth'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import VChart from 'vue-echarts'
@@ -116,6 +116,13 @@ async function fetchPendingActivities() {
     )
   } catch (e) { /* ignore */ }
   finally { auditLoading.value = false }
+}
+
+async function showAiSuggestion(row) {
+  try {
+    const res = await aiChatApi.getAuditSuggestion(row.id)
+    ElMessageBox.alert(res.data.suggestion, 'AI 审核建议 - ' + row.title, { confirmButtonText: '知道了' })
+  } catch (e) { /* ignore */ }
 }
 
 async function handleAudit(row, status) {
@@ -526,7 +533,7 @@ onMounted(() => {
             <el-table-column label="时间" min-width="200">
               <template #default="{ row }">{{ formatTime(row.startTime) }} ~ {{ formatTime(row.endTime) }}</template>
             </el-table-column>
-            <el-table-column label="操作" width="200">
+            <el-table-column label="操作" width="300">
               <template #default="{ row }">
                 <el-button size="small" type="success" @click="handleAudit(row, 'approved')">
                   {{ row.status === 'cancel_pending' ? '同意取消' : '通过' }}
@@ -534,6 +541,7 @@ onMounted(() => {
                 <el-button size="small" type="danger" @click="handleAudit(row, 'rejected')">
                   {{ row.status === 'cancel_pending' ? '驳回申请' : '驳回' }}
                 </el-button>
+                <el-button size="small" type="warning" @click="showAiSuggestion(row)">🤖 AI建议</el-button>
               </template>
             </el-table-column>
           </el-table>

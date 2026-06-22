@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
-import { activityApi, registrationApi, signInApi, categoryApi, dashboardApi } from '@/api'
+import { activityApi, registrationApi, signInApi, categoryApi, dashboardApi, aiChatApi } from '@/api'
 import { useAuthStore } from '@/store/auth'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import VChart from 'vue-echarts'
@@ -187,6 +187,17 @@ function statusTagType(status) {
   return map[status] || 'info'
 }
 
+const aiGenLoading = ref(false)
+async function generateDescription() {
+  if (!form.value.title || !form.value.categoryId) return
+  aiGenLoading.value = true
+  try {
+    const res = await aiChatApi.generateDescription(form.value.title, form.value.categoryId)
+    form.value.description = res.data.description
+  } catch (e) { /* ignore */ }
+  finally { aiGenLoading.value = false }
+}
+
 function formatTime(time) {
   if (!time) return ''
   return time.replace('T', ' ').substring(0, 16)
@@ -329,6 +340,9 @@ onMounted(() => {
         </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input v-model="form.description" type="textarea" :rows="4" placeholder="活动详细描述" />
+          <el-button size="small" style="margin-top:6px" :disabled="!form.title || !form.categoryId" :loading="aiGenLoading" @click="generateDescription">
+            ✨ AI 生成描述
+          </el-button>
         </el-form-item>
         <el-form-item label="封面图">
           <el-input v-model="form.coverImage" placeholder="请输入图片 URL，例如 https://example.com/cover.jpg" clearable />

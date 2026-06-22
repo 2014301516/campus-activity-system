@@ -144,4 +144,51 @@ public class AiChatServiceImpl implements AiChatService {
         }
         throw new RuntimeException("DeepSeek 返回为空");
     }
+
+    @Override
+    public String generateDescription(String title, Long categoryId) {
+        if (!StringUtils.hasText(deepSeek.getApiKey())) {
+            return "AI 功能尚未配置 API Key，请手动填写活动描述。";
+        }
+        String catName = categoryService.getById(categoryId).getName();
+        String prompt = "为校园活动「" + title + "」写一段活动描述（分类：" + catName
+                + "）。100-200字，吸引学生参加，不要用Markdown格式。";
+
+        try {
+            List<Map<String, String>> msgs = new ArrayList<>();
+            msgs.add(Map.of("role", "system", "content", "你是校园活动文案助手，写吸引人的活动描述。"));
+            msgs.add(Map.of("role", "user", "content", prompt));
+            return callDeepSeek(msgs);
+        } catch (Exception e) {
+            return "AI 生成失败：" + e.getMessage();
+        }
+    }
+
+    @Override
+    public String getAuditSuggestion(Long activityId) {
+        if (!StringUtils.hasText(deepSeek.getApiKey())) {
+            return "AI 功能尚未配置 API Key。";
+        }
+        Activity activity = activityService.getById(activityId);
+        if (activity == null) return "活动不存在";
+
+        String catName = categoryService.getById(activity.getCategoryId()).getName();
+        String prompt = "请审核以下校园活动并给出建议（50-100字）：\n"
+                + "标题：" + activity.getTitle() + "\n"
+                + "分类：" + catName + "\n"
+                + "描述：" + activity.getDescription() + "\n"
+                + "地点：" + activity.getLocation() + "\n"
+                + "时间：" + activity.getStartTime() + " ~ " + activity.getEndTime() + "\n"
+                + "人数上限：" + activity.getMaxParticipants() + "\n"
+                + "请评估：1）是否适合校园发布 2）信息是否完整 3）建议通过还是驳回";
+
+        try {
+            List<Map<String, String>> msgs = new ArrayList<>();
+            msgs.add(Map.of("role", "system", "content", "你是校园活动审核助手，给出简洁专业的审核建议。"));
+            msgs.add(Map.of("role", "user", "content", prompt));
+            return callDeepSeek(msgs);
+        } catch (Exception e) {
+            return "AI 审核建议生成失败：" + e.getMessage();
+        }
+    }
 }

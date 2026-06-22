@@ -73,7 +73,9 @@ export const recommendationApi = {
 }
 
 export const aiChatApi = {
-  ask: (question, activityId, messages) => request.post('/ai/ask', { question, activityId, messages })
+  ask: (question, activityId, messages) => request.post('/ai/ask', { question, activityId, messages }),
+  generateDescription: (title, categoryId) => request.post('/ai/generate-description', { title, categoryId }),
+  getAuditSuggestion: (activityId) => request.get('/ai/audit-suggestion', { params: { activityId } })
 }
 
 // ==================== 活动聊天室 ====================
