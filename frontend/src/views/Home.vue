@@ -11,6 +11,7 @@ const activityList = ref([])
 const categories = ref([])
 const notices = ref([])
 const featuredActivities = ref([])
+const carouselActivities = ref([])
 const upcomingActivities = ref([])
 const freshActivities = ref([])
 const aiRecommendations = ref([])
@@ -86,6 +87,12 @@ async function fetchFeaturedActivities() {
     const res = await activityApi.getList({ page: 1, size: 3, sort: 'newest' })
     featuredActivities.value = res.data.records || []
   } catch (e) { /* ignore */ }
+}
+async function fetchCarouselActivities() {
+  try {
+    const res = await activityApi.getList({ page: 1, size: 20, sort: 'startTimeAsc' })
+    carouselActivities.value = (res.data.records || []).filter(a => a.coverImage).slice(0, 5)
+  } catch (e) {}
 }
 
 async function fetchUpcomingActivities() {
@@ -320,6 +327,7 @@ async function initHomePage() {
     fetchNotices(),
     fetchStats(),
     fetchFeaturedActivities(),
+    fetchCarouselActivities(),
     fetchUpcomingActivities(),
     fetchActivities()
   ])
@@ -341,63 +349,32 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="home-page">
-    <section ref="heroSectionRef" class="hero-section">
-      <div class="hero-main">
-        <div class="hero-copy">
-          <span class="hero-label">校园活动一站式平台</span>
-          <h1>发现值得参加的校园活动</h1>
-          <p>
-            在这里快速查看讲座、比赛、志愿服务和社团活动，及时完成报名、签到和评价。
-          </p>
-          <div class="hero-actions">
-            <el-button type="primary" size="large" @click="handleBrowseAll">浏览全部活动</el-button>
-            <el-button size="large" @click="handleViewPopular">查看热门活动</el-button>
-          </div>
-        </div>
-        <div class="hero-highlight" v-if="featuredActivities.length > 0" @click="goDetail(featuredActivities[0].id)">
-          <div class="hero-highlight-cover">
-            <img v-if="featuredActivities[0].coverImage" :src="featuredActivities[0].coverImage" alt="" />
-            <div v-else class="cover-placeholder">
-              <el-icon :size="44"><Picture /></el-icon>
-            </div>
-            <span class="card-badge" :class="'badge-' + featuredActivities[0].status">
-              {{ statusTag(featuredActivities[0].status).text }}
-            </span>
-          </div>
-          <div class="hero-highlight-body">
-            <div class="hero-highlight-title">{{ featuredActivities[0].title }}</div>
-            <div class="hero-highlight-desc">
-              {{ featuredActivities[0].description?.substring(0, 70) }}{{ featuredActivities[0].description?.length > 70 ? '...' : '' }}
-            </div>
-            <div class="hero-highlight-meta">
-              <span><el-icon><Clock /></el-icon>{{ formatTime(featuredActivities[0].startTime) }}</span>
-              <span><el-icon><Location /></el-icon>{{ featuredActivities[0].location }}</span>
+    <!-- 轮播图 -->
+    <section class="hero-carousel">
+      <el-carousel height="420px" :interval="5000" arrow="always">
+        <el-carousel-item v-for="item in carouselActivities" :key="item.id">
+          <div class="carousel-slide" :style="{ backgroundImage: 'url(' + (item.coverImage || '') + ')' }">
+            <div class="carousel-overlay">
+              <div class="carousel-content">
+                <span class="carousel-category">{{ item.categoryName }}</span>
+                <h2 class="carousel-title" @click="goDetail(item.id)">{{ item.title }}</h2>
+                <p class="carousel-desc">{{ item.description?.substring(0, 80) }}{{ item.description?.length > 80 ? '...' : '' }}</p>
+                <div class="carousel-meta">
+                  <span>📅 {{ formatDate(item.startTime) }}</span>
+                  <span>📍 {{ item.location }}</span>
+                  <span>👤 {{ item.currentParticipants }}/{{ item.maxParticipants }}</span>
+                </div>
+                <el-button type="primary" size="large" @click="goDetail(item.id)">立即查看</el-button>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </el-carousel-item>
+      </el-carousel>
 
-      <div class="hero-side" v-if="featuredActivities.length > 1">
-        <div
-          v-for="activity in featuredActivities.slice(1)"
-          :key="activity.id"
-          class="hero-mini-card"
-          @click="goDetail(activity.id)"
-        >
-          <div class="hero-mini-cover">
-            <img v-if="activity.coverImage" :src="activity.coverImage" alt="" />
-            <div v-else class="cover-placeholder">
-              <el-icon :size="28"><Picture /></el-icon>
-            </div>
-            <span class="card-badge" :class="'badge-' + activity.status">
-              {{ statusTag(activity.status).text }}
-            </span>
-          </div>
-          <div class="hero-mini-body">
-            <div class="hero-mini-title">{{ activity.title }}</div>
-            <div class="hero-mini-meta">{{ formatDate(activity.startTime) }} · {{ activity.categoryName }}</div>
-          </div>
-        </div>
+      <div class="hero-data-strip">
+        <div class="hero-data-item"><strong>{{ stats.totalActivities || 0 }}</strong><span>活动总数</span></div>
+        <div class="hero-data-item"><strong>{{ stats.ongoingActivities || 0 }}</strong><span>进行中活动</span></div>
+        <div class="hero-data-item"><strong>{{ notices.length }}</strong><span>最新公告</span></div>
       </div>
     </section>
 
@@ -723,6 +700,7 @@ onBeforeUnmount(() => {
   margin: 0 auto;
   position: relative;
   z-index: 0;
+  padding: 0 12px 32px;
 }
 
 .home-page::before {
@@ -733,7 +711,7 @@ onBeforeUnmount(() => {
   bottom: 0;
   left: 0;
   background:
-    linear-gradient(rgba(245, 248, 255, 0.78), rgba(245, 248, 255, 0.78)),
+    linear-gradient(rgba(246, 249, 255, 0.9), rgba(246, 249, 255, 0.9)),
     url('/home-background.jpg') center / cover no-repeat;
   z-index: -2;
   pointer-events: none;
@@ -751,70 +729,237 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 
+/* 轮播图 */
+.hero-carousel { margin-bottom: 24px; }
+.carousel-slide {
+  height: 420px; background-size: cover; background-position: center;
+  position: relative;
+}
+.carousel-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 100%);
+  display: flex; align-items: center; padding: 0 60px;
+}
+.carousel-content { color: #fff; max-width: 560px; }
+.carousel-category {
+  display: inline-block; background: rgba(255,255,255,0.2); color: #fff;
+  padding: 4px 14px; border-radius: 20px; font-size: 13px; margin-bottom: 12px;
+}
+.carousel-title { font-size: 32px; font-weight: 700; margin: 8px 0; cursor: pointer; }
+.carousel-title:hover { text-decoration: underline; }
+.carousel-desc { font-size: 15px; opacity: 0.85; line-height: 1.6; margin-bottom: 12px; }
+.carousel-meta { display: flex; gap: 20px; font-size: 13px; opacity: 0.8; margin-bottom: 16px; }
+
 .hero-section {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 20px;
   margin-bottom: 24px;
 }
 
 .hero-main {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 20px;
-  background: linear-gradient(135deg, #eef5ff 0%, #f8fbff 100%);
-  border-radius: 18px;
-  padding: 28px;
-  border: 1px solid #e4efff;
+  grid-template-columns: minmax(0, 1.02fr) minmax(420px, 1.18fr);
+  gap: 28px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(243, 248, 255, 0.88) 55%, rgba(237, 244, 255, 0.82) 100%);
+  backdrop-filter: blur(16px);
+  border-radius: 32px;
+  padding: 38px;
+  border: 1px solid rgba(214, 228, 248, 0.95);
+  box-shadow: 0 26px 60px rgba(46, 81, 122, 0.14);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-main::before {
+  content: '';
+  position: absolute;
+  top: -120px;
+  right: -80px;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(64, 158, 255, 0.22) 0%, rgba(64, 158, 255, 0) 72%);
+  pointer-events: none;
+}
+
+.hero-main::after {
+  content: '';
+  position: absolute;
+  left: 42%;
+  bottom: -110px;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(117, 171, 255, 0.16) 0%, rgba(117, 171, 255, 0) 72%);
+  pointer-events: none;
 }
 
 .hero-copy {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  position: relative;
+  z-index: 1;
 }
 
 .hero-label {
   display: inline-block;
   width: fit-content;
-  background: #eaf3ff;
-  color: #409eff;
+  background: rgba(64, 158, 255, 0.12);
+  color: #2168c9;
   border-radius: 999px;
-  padding: 6px 12px;
+  padding: 8px 16px;
   font-size: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  font-weight: 600;
+  box-shadow: 0 10px 24px rgba(64, 158, 255, 0.12);
 }
 
-.hero-copy h1 {
-  font-size: 34px;
-  line-height: 1.2;
-  color: #1f2d3d;
+.hero-eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7f8ea3;
   margin-bottom: 14px;
 }
 
+.hero-copy h1 {
+  font-size: 48px;
+  line-height: 1.08;
+  color: #162334;
+  margin-bottom: 18px;
+  max-width: 560px;
+  letter-spacing: -0.02em;
+}
+
 .hero-copy p {
-  color: #5c6b77;
-  line-height: 1.8;
-  margin-bottom: 22px;
+  color: #5d6b7d;
+  line-height: 1.9;
+  font-size: 15px;
+  margin-bottom: 20px;
+  max-width: 540px;
+}
+
+.hero-feature-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.hero-feature-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 15px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(214, 228, 248, 0.92);
+  color: #526276;
+  font-size: 13px;
+  box-shadow: 0 10px 22px rgba(47, 85, 131, 0.07);
 }
 
 .hero-actions {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  margin-bottom: 26px;
+}
+
+.hero-data-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 520px;
+}
+
+.hero-data-item {
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(220, 231, 247, 0.96);
+  box-shadow: 0 14px 28px rgba(53, 86, 128, 0.08);
+}
+
+.hero-data-item strong {
+  display: block;
+  font-size: 24px;
+  line-height: 1;
+  color: #1e2d3d;
+}
+
+.hero-data-item span {
+  display: block;
+  margin-top: 8px;
+  color: #7a8798;
+  font-size: 12px;
+}
+
+.hero-showcase {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 18px;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-showcase-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hero-showcase-kicker {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #2f7de1, #57a6ff);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 14px 28px rgba(64, 158, 255, 0.22);
+}
+
+.hero-showcase-title {
+  margin-top: 12px;
+  color: #203047;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.hero-showcase-text {
+  color: #7d8da2;
+  font-size: 13px;
+  max-width: 220px;
+  text-align: right;
+}
+
+.hero-showcase-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(240px, 0.82fr);
+  gap: 18px;
 }
 
 .hero-highlight {
-  background: #fff;
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 24px;
   overflow: hidden;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(64, 158, 255, 0.08);
+  border: 1px solid rgba(223, 234, 248, 0.95);
+  box-shadow: 0 18px 36px rgba(43, 73, 111, 0.12);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.hero-highlight:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 44px rgba(43, 73, 111, 0.16);
 }
 
 .hero-highlight-cover {
   position: relative;
-  height: 190px;
+  height: 244px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
@@ -825,28 +970,52 @@ onBeforeUnmount(() => {
 }
 
 .hero-highlight-body {
-  padding: 18px;
+  padding: 22px;
 }
 
-.hero-highlight-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #303133;
-  margin-bottom: 8px;
-}
-
-.hero-highlight-desc {
-  color: #606266;
-  line-height: 1.7;
-  font-size: 13px;
+.hero-highlight-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   margin-bottom: 12px;
 }
 
+.hero-highlight-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #eef5ff;
+  color: #327bdb;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hero-highlight-time {
+  color: #8b98aa;
+  font-size: 12px;
+}
+
+.hero-highlight-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #303133;
+  margin-bottom: 10px;
+}
+
+.hero-highlight-desc {
+  color: #5d6c7f;
+  line-height: 1.8;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
 .hero-highlight-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  color: #909399;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  color: #7f8c9d;
   font-size: 13px;
 }
 
@@ -854,25 +1023,64 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 6px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #f7faff;
 }
 
 .hero-side {
   display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-content: start;
+}
+
+.hero-showcase-footer {
+  display: flex;
+  flex-wrap: wrap;
   gap: 16px;
 }
 
+.hero-showcase-point {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(220, 231, 247, 0.92);
+  color: #58697e;
+  font-size: 13px;
+  box-shadow: 0 10px 20px rgba(44, 72, 110, 0.06);
+}
+
+.hero-showcase-point::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3d8fff, #75b1ff);
+  box-shadow: 0 0 0 5px rgba(64, 158, 255, 0.12);
+}
+
 .hero-mini-card {
-  background: #fff;
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 20px;
   overflow: hidden;
   cursor: pointer;
-  border: 1px solid #ebeef5;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(226, 235, 247, 0.95);
+  box-shadow: 0 14px 28px rgba(44, 72, 110, 0.08);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.hero-mini-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 34px rgba(44, 72, 110, 0.12);
 }
 
 .hero-mini-cover {
   position: relative;
-  height: 124px;
+  height: 132px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   overflow: hidden;
 }
@@ -884,7 +1092,7 @@ onBeforeUnmount(() => {
 }
 
 .hero-mini-body {
-  padding: 16px 18px;
+  padding: 16px 18px 18px;
 }
 
 .hero-mini-title {
@@ -902,14 +1110,28 @@ onBeforeUnmount(() => {
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 18px;
+  margin-bottom: 28px;
 }
 
 .stat-card {
-  border-radius: 16px;
-  padding: 22px;
+  border-radius: 22px;
+  padding: 24px;
   color: #fff;
+  box-shadow: 0 20px 40px rgba(44, 72, 110, 0.14);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: -24px;
+  right: -24px;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .stat-value {
@@ -928,10 +1150,10 @@ onBeforeUnmount(() => {
   opacity: 0.9;
 }
 
-.stat-blue { background: linear-gradient(135deg, #409eff, #337ecc); }
-.stat-green { background: linear-gradient(135deg, #67c23a, #529b2e); }
-.stat-orange { background: linear-gradient(135deg, #e6a23c, #cf9236); }
-.stat-purple { background: linear-gradient(135deg, #9b6bff, #7a4ee0); }
+.stat-blue { background: linear-gradient(135deg, #3e8dff, #5aa9ff); }
+.stat-green { background: linear-gradient(135deg, #32b67a, #57c68e); }
+.stat-orange { background: linear-gradient(135deg, #f0a43b, #f4ba5e); }
+.stat-purple { background: linear-gradient(135deg, #7d63ff, #9b7dff); }
 
 .section-head {
   display: flex;
@@ -1450,7 +1672,6 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 1200px) {
-  .hero-section,
   .hero-main,
   .stats-grid,
   .notice-grid,
@@ -1460,13 +1681,28 @@ onBeforeUnmount(() => {
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .hero-main {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-showcase-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-copy h1 {
+    max-width: none;
+  }
+
+  .hero-data-strip {
+    max-width: none;
+  }
+
   .floating-nav {
     right: 14px;
   }
 }
 
 @media (max-width: 900px) {
-  .hero-section,
   .hero-main,
   .stats-grid,
   .notice-grid,
@@ -1490,8 +1726,27 @@ onBeforeUnmount(() => {
     flex-direction: column;
   }
 
+  .hero-showcase-head {
+    flex-direction: column;
+  }
+
+  .hero-showcase-text {
+    max-width: none;
+    text-align: left;
+  }
+
   .recommendation-mode-switch {
     width: fit-content;
+  }
+
+  .hero-copy h1 {
+    font-size: 34px;
+  }
+
+  .hero-data-strip,
+  .hero-side,
+  .hero-highlight-meta {
+    grid-template-columns: 1fr;
   }
 }
 </style>
