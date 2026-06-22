@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { activityApi, categoryApi, noticeApi, dashboardApi, recommendationApi } from '@/api'
 import { useAuthStore } from '@/store/auth'
@@ -17,8 +17,18 @@ const aiRecommendations = ref([])
 const aiLoading = ref(false)
 const RECOMMENDATION_MODE_KEY = 'homeRecommendationMode'
 const recommendationMode = ref(loadInitialRecommendationMode())
+const heroSectionRef = ref(null)
+const highlightSectionRef = ref(null)
+const aiPanelRef = ref(null)
+const activeNavSection = ref('top')
 const total = ref(0)
 const activitySquareRef = ref(null)
+const floatingNavItems = [
+  { id: 'top', label: '顶部概览' },
+  { id: 'featured', label: '精选活动' },
+  { id: 'recommend', label: '为你推荐' },
+  { id: 'square', label: '活动广场' }
+]
 const stats = ref({
   totalActivities: 0,
   ongoingActivities: 0,
@@ -221,6 +231,57 @@ function categoryCountLabel() {
   return `${categories.value.length} 个分类`
 }
 
+function isRecommendationVisible() {
+  return authStore.isLoggedIn && authStore.role === 'student'
+}
+
+function visibleFloatingNavItems() {
+  return floatingNavItems.filter(item => item.id !== 'recommend' || isRecommendationVisible())
+}
+
+function getSectionElement(id) {
+  const sectionMap = {
+    top: heroSectionRef.value,
+    featured: highlightSectionRef.value,
+    recommend: aiPanelRef.value,
+    square: activitySquareRef.value
+  }
+  return sectionMap[id] || null
+}
+
+function scrollToSection(id) {
+  activeNavSection.value = id
+  getSectionElement(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function updateActiveNavSection() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const sections = visibleFloatingNavItems()
+    .map(item => ({ id: item.id, element: getSectionElement(item.id) }))
+    .filter(item => item.element)
+
+  if (sections.length === 0) {
+    return
+  }
+
+  if (window.scrollY < 120) {
+    activeNavSection.value = 'top'
+    return
+  }
+
+  let currentSection = sections[0].id
+  for (const section of sections) {
+    const top = section.element.getBoundingClientRect().top
+    if (top <= 180) {
+      currentSection = section.id
+    }
+  }
+  activeNavSection.value = currentSection
+}
+
 async function initHomePage() {
   await Promise.all([
     fetchCategories(),
@@ -234,14 +295,21 @@ async function initHomePage() {
   await fetchAiRecommendations(recommendationMode.value)
 }
 
-onMounted(() => {
-  initHomePage()
+onMounted(async () => {
+  window.addEventListener('scroll', updateActiveNavSection, { passive: true })
+  await initHomePage()
+  await nextTick()
+  updateActiveNavSection()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', updateActiveNavSection)
 })
 </script>
 
 <template>
   <div class="home-page">
-    <section class="hero-section">
+    <section ref="heroSectionRef" class="hero-section">
       <div class="hero-main">
         <div class="hero-copy">
           <span class="hero-label">校园活动一站式平台</span>
@@ -339,7 +407,7 @@ onMounted(() => {
       </div>
     </section>
 
-    <section class="highlight-grid">
+    <section ref="highlightSectionRef" class="highlight-grid">
       <div class="highlight-column">
         <div class="section-head">
           <div>
@@ -382,7 +450,7 @@ onMounted(() => {
       </div>
     </section>
 
-    <section v-if="authStore.isLoggedIn && authStore.role === 'student'" class="ai-panel">
+    <section v-if="authStore.isLoggedIn && authStore.role === 'student'" ref="aiPanelRef" class="ai-panel">
       <div class="section-head">
         <div>
           <h3>为你推荐</h3>
@@ -583,6 +651,20 @@ onMounted(() => {
         />
       </div>
     </div>
+
+    <aside class="floating-nav" aria-label="首页分区导航">
+      <button
+        v-for="item in visibleFloatingNavItems()"
+        :key="item.id"
+        type="button"
+        class="floating-nav-item"
+        :class="{ 'is-active': activeNavSection === item.id }"
+        @click="scrollToSection(item.id)"
+      >
+        <span class="floating-nav-dot" />
+        <span class="floating-nav-label">{{ item.label }}</span>
+      </button>
+    </aside>
   </div>
 </template>
 
@@ -590,6 +672,7 @@ onMounted(() => {
 .home-page {
   max-width: 1280px;
   margin: 0 auto;
+  position: relative;
 }
 
 .hero-section {
@@ -1216,6 +1299,68 @@ onMounted(() => {
   margin-top: 32px;
 }
 
+.floating-nav {
+  position: fixed;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.84);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(220, 232, 250, 0.9);
+  box-shadow: 0 16px 34px rgba(31, 45, 61, 0.08);
+  z-index: 20;
+}
+
+.floating-nav-item {
+  min-width: 118px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: #6f7f95;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.floating-nav-item:hover {
+  background: rgba(240, 246, 255, 0.92);
+  color: #3d5675;
+}
+
+.floating-nav-item.is-active {
+  background: linear-gradient(135deg, #409eff, #5caeff);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(64, 158, 255, 0.24);
+}
+
+.floating-nav-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.72;
+  flex-shrink: 0;
+}
+
+.floating-nav-item.is-active .floating-nav-dot {
+  opacity: 1;
+}
+
+.floating-nav-label {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 @media (max-width: 1200px) {
   .hero-section,
   .hero-main,
@@ -1225,6 +1370,10 @@ onMounted(() => {
   .ai-grid,
   .activity-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .floating-nav {
+    right: 14px;
   }
 }
 
@@ -1242,6 +1391,10 @@ onMounted(() => {
   .filter-bar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .floating-nav {
+    display: none;
   }
 
   .section-head {
