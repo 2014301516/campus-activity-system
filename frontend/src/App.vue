@@ -141,13 +141,14 @@ body {
 .page-card { background: #fff; border-radius: 8px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
 
 /* 全局彩色统计卡片 */
-.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
-.stat-card { border-radius: 14px; padding: 24px 20px; color: #fff; position: relative; overflow: hidden; }
-.stat-value { font-size: 34px; font-weight: 700; letter-spacing: -0.5px; }
-.stat-label { font-size: 14px; opacity: 0.9; margin-top: 4px; font-weight: 500; }
-.stat-sub { font-size: 12px; opacity: 0.65; margin-top: 6px; }
-.stat-blue  { background: linear-gradient(135deg, #409eff, #337ecc); }
-.stat-green { background: linear-gradient(135deg, #67c23a, #529b2e); }
-.stat-orange{ background: linear-gradient(135deg, #e6a23c, #cf9236); }
-.stat-purple{ background: linear-gradient(135deg, #a855f7, #9333ea); }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 20px; }
+.stat-card { border-radius: 22px; padding: 28px 24px; color: #fff; position: relative; overflow: hidden; box-shadow: 0 20px 40px rgba(44,72,110,0.14); }
+.stat-card::after { content: ''; position: absolute; top: -24px; right: -24px; width: 96px; height: 96px; border-radius: 50%; background: rgba(255,255,255,0.12); }
+.stat-value { font-size: 38px; font-weight: 700; letter-spacing: -0.5px; }
+.stat-label { font-size: 15px; opacity: 0.9; margin-top: 6px; font-weight: 500; }
+.stat-sub { font-size: 12px; opacity: 0.85; margin-top: 8px; }
+.stat-blue  { background: linear-gradient(135deg, #3e8dff, #5aa9ff); }
+.stat-green { background: linear-gradient(135deg, #32b67a, #57c68e); }
+.stat-orange{ background: linear-gradient(135deg, #f0a43b, #f4ba5e); }
+.stat-purple{ background: linear-gradient(135deg, #7d63ff, #9b7dff); }
 </style>

@@ -1775,15 +1775,4 @@ onBeforeUnmount(() => {
   }
 }
 
-/* 首页特有统计卡片 */
-.stats-grid { gap: 18px; margin-bottom: 28px; }
-.stat-card { border-radius: 22px; padding: 28px 24px; box-shadow: 0 20px 40px rgba(44,72,110,0.14); }
-.stat-card::after { content: ""; position: absolute; top: -24px; right: -24px; width: 96px; height: 96px; border-radius: 50%; background: rgba(255,255,255,0.12); }
-.stat-value { font-size: 38px; }
-.stat-label { font-size: 15px; margin-top: 6px; }
-.stat-sub { font-size: 12px; margin-top: 8px; opacity: 0.85; }
-.stat-blue { background: linear-gradient(135deg, #3e8dff, #5aa9ff); }
-.stat-green { background: linear-gradient(135deg, #32b67a, #57c68e); }
-.stat-orange { background: linear-gradient(135deg, #f0a43b, #f4ba5e); }
-.stat-purple { background: linear-gradient(135deg, #7d63ff, #9b7dff); }
 </style>
