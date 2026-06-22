@@ -72,7 +72,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
     private ObjectMapper objectMapper;
 
     @Override
-    public List<AiRecommendationDTO> getRecommendations(Long userId) {
+    public List<AiRecommendationDTO> getRecommendations(Long userId, boolean enableAi) {
         activityService.refreshActivityStatuses();
 
         List<Registration> registrations = registrationService.lambdaQuery()
@@ -110,7 +110,13 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
                 .limit(MAX_CANDIDATE_COUNT)
                 .collect(Collectors.toList());
 
-        Map<Long, RecommendationText> reasonMap = generateReasonsByDeepSeek(profile, rankedCandidates);
+        if (!enableAi) {
+            log.info("当前使用快速推荐模式，跳过 DeepSeek 文案生成");
+        }
+
+        Map<Long, RecommendationText> reasonMap = enableAi
+                ? generateReasonsByDeepSeek(profile, rankedCandidates)
+                : new HashMap<>();
 
         return rankedCandidates.stream()
                 .limit(MAX_RESULT_COUNT)

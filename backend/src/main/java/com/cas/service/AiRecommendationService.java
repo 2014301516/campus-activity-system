@@ -10,7 +10,7 @@ import java.util.List;
 public interface AiRecommendationService {
 
     /**
-     * 获取当前学生的 AI 推荐活动
+     * 获取当前学生的推荐活动
      */
-    List<AiRecommendationDTO> getRecommendations(Long userId);
+    List<AiRecommendationDTO> getRecommendations(Long userId, boolean enableAi);
 }

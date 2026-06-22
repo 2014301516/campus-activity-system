@@ -56,7 +56,7 @@ export const dashboardApi = {
 
 // ==================== AI 推荐 ====================
 export const recommendationApi = {
-  getList: () => request.get('/ai/recommendations')
+  getList: (mode = 'local') => request.get('/ai/recommendations', { params: { mode } })
 }
 
 // ==================== 管理员 ====================

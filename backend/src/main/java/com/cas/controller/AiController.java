@@ -7,6 +7,7 @@ import com.cas.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -28,9 +29,11 @@ public class AiController {
      * 获取当前登录学生的 AI 推荐活动
      */
     @GetMapping("/recommendations")
-    public Result<List<AiRecommendationDTO>> getRecommendations() {
+    public Result<List<AiRecommendationDTO>> getRecommendations(
+            @RequestParam(defaultValue = "local") String mode) {
         securityUtil.requireStudent();
         Long userId = securityUtil.getCurrentUserId();
-        return Result.success(aiRecommendationService.getRecommendations(userId));
+        boolean enableAi = "ai".equalsIgnoreCase(mode);
+        return Result.success(aiRecommendationService.getRecommendations(userId, enableAi));
     }
 }

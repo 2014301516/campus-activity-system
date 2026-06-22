@@ -15,6 +15,8 @@ const upcomingActivities = ref([])
 const freshActivities = ref([])
 const aiRecommendations = ref([])
 const aiLoading = ref(false)
+const RECOMMENDATION_MODE_KEY = 'homeRecommendationMode'
+const recommendationMode = ref(loadInitialRecommendationMode())
 const total = ref(0)
 const activitySquareRef = ref(null)
 const stats = ref({
@@ -102,7 +104,14 @@ async function fetchFreshActivities() {
   } catch (e) { /* ignore */ }
 }
 
-async function fetchAiRecommendations() {
+function loadInitialRecommendationMode() {
+  if (typeof window === 'undefined') {
+    return 'local'
+  }
+  return localStorage.getItem(RECOMMENDATION_MODE_KEY) === 'ai' ? 'ai' : 'local'
+}
+
+async function fetchAiRecommendations(mode = recommendationMode.value) {
   if (!authStore.isLoggedIn || authStore.role !== 'student') {
     aiRecommendations.value = []
     return
@@ -110,13 +119,24 @@ async function fetchAiRecommendations() {
 
   aiLoading.value = true
   try {
-    const res = await recommendationApi.getList()
+    const res = await recommendationApi.getList(mode)
     aiRecommendations.value = res.data || []
   } catch (e) {
     aiRecommendations.value = []
   } finally {
     aiLoading.value = false
   }
+}
+
+async function handleRecommendationModeChange(mode) {
+  if (recommendationMode.value === mode && aiRecommendations.value.length > 0) {
+    return
+  }
+  recommendationMode.value = mode
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(RECOMMENDATION_MODE_KEY, mode)
+  }
+  await fetchAiRecommendations(mode)
 }
 
 function handleSearch() {
@@ -211,7 +231,7 @@ async function initHomePage() {
     fetchActivities()
   ])
   await fetchFreshActivities()
-  await fetchAiRecommendations()
+  await fetchAiRecommendations(recommendationMode.value)
 }
 
 onMounted(() => {
@@ -365,8 +385,32 @@ onMounted(() => {
     <section v-if="authStore.isLoggedIn && authStore.role === 'student'" class="ai-panel">
       <div class="section-head">
         <div>
-          <h3>AI 为你推荐</h3>
-          <p>结合你的历史报名、签到和评价记录，优先推荐更匹配的活动</p>
+          <h3>为你推荐</h3>
+          <p>
+            {{ recommendationMode === 'ai'
+              ? '已切换为 AI 推荐，会生成更细致的推荐说明，加载会稍慢一些'
+              : '默认使用本地快速推荐，结合你的历史报名、签到和评价记录优先推荐更匹配的活动' }}
+          </p>
+        </div>
+        <div class="recommendation-mode-switch" role="tablist" aria-label="推荐模式切换">
+          <button
+            type="button"
+            class="mode-tab"
+            :class="{ 'is-active': recommendationMode === 'local' }"
+            @click="handleRecommendationModeChange('local')"
+          >
+            <span class="mode-tab-title">快速推荐</span>
+            <span class="mode-tab-desc">本地秒开</span>
+          </button>
+          <button
+            type="button"
+            class="mode-tab"
+            :class="{ 'is-active': recommendationMode === 'ai' }"
+            @click="handleRecommendationModeChange('ai')"
+          >
+            <span class="mode-tab-title">AI 推荐</span>
+            <span class="mode-tab-desc">文案更细</span>
+          </button>
         </div>
       </div>
 
@@ -388,7 +432,9 @@ onMounted(() => {
                 </div>
               </div>
               <div class="ai-card-badges">
-                <el-tag size="small" type="success" effect="plain">{{ activity.tag || 'AI推荐' }}</el-tag>
+                <el-tag size="small" type="success" effect="plain">
+                  {{ activity.tag || (recommendationMode === 'ai' ? 'AI推荐' : '快速推荐') }}
+                </el-tag>
                 <span class="ai-score">匹配度 {{ activity.score || 0 }}</span>
               </div>
             </div>
@@ -397,8 +443,11 @@ onMounted(() => {
 
             <div v-if="activity.analysis || activity.highlights?.length" class="ai-analysis-box">
               <div class="ai-analysis-header">
-                <div class="ai-analysis-title">AI 分析：为什么推荐你</div>
+                <div class="ai-analysis-title">
+                  {{ recommendationMode === 'ai' ? 'AI 分析：为什么推荐你' : '推荐依据' }}
+                </div>
                 <span
+                  v-if="recommendationMode === 'ai' && activity.source"
                   class="ai-source-badge"
                   :class="activity.source === 'deepseek' ? 'source-deepseek' : 'source-fallback'"
                 >
@@ -729,6 +778,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: end;
+  gap: 16px;
   margin-bottom: 14px;
 }
 
@@ -799,6 +849,52 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
+}
+
+.recommendation-mode-switch {
+  display: flex;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 16px;
+  background: #f5f8ff;
+  border: 1px solid #dfe9ff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.mode-tab {
+  min-width: 120px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #6b7a90;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: all 0.2s ease;
+}
+
+.mode-tab:hover {
+  background: rgba(255, 255, 255, 0.65);
+  color: #3f4f67;
+}
+
+.mode-tab.is-active {
+  background: linear-gradient(135deg, #409eff, #5aa8ff);
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(64, 158, 255, 0.22);
+}
+
+.mode-tab-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mode-tab-desc {
+  font-size: 12px;
+  opacity: 0.88;
 }
 
 .ai-card {
@@ -1146,6 +1242,15 @@ onMounted(() => {
   .filter-bar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .section-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .recommendation-mode-switch {
+    width: fit-content;
   }
 }
 </style>
