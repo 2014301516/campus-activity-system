@@ -20,7 +20,7 @@ public class AiChatController {
     @PostMapping("/ask")
     public Result<Map<String, Object>> ask(@Valid @RequestBody AiAskDTO dto) {
         Long userId = securityUtil.getCurrentUserId();
-        Map<String, Object> result = aiChatService.ask(userId, dto.getQuestion(), dto.getActivityId());
+        Map<String, Object> result = aiChatService.ask(userId, dto.getQuestion(), dto.getActivityId(), dto.getMessages());
         return Result.success(result);
     }
 }

@@ -32,29 +32,41 @@ public class AiChatServiceImpl implements AiChatService {
     private static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("MM月dd日 HH:mm");
 
     @Override
-    public Map<String, Object> ask(Long userId, String question, Long activityId) {
-        // 无 API Key 降级
+    @Override
+    public Map<String, Object> ask(Long userId, String question, Long activityId, List<Map<String, String>> messages) {
         if (!StringUtils.hasText(deepSeek.getApiKey())) {
             Map<String, Object> fallback = new HashMap<>();
-            fallback.put("answer", "AI 问答功能尚未配置 DeepSeek API Key，请参考文档设置后重试。你可以先浏览首页的推荐活动，或点击活动卡片查看详情。");
+            fallback.put("answer", "AI 问答功能尚未配置 DeepSeek API Key，请参考文档设置后重试。");
             fallback.put("source", "fallback");
             return fallback;
         }
 
-        // 构建上下文
+        List<Map<String, String>> msgs = new ArrayList<>();
+
+        // 系统提示 + 上下文
         String context = buildContext(userId, activityId);
-        String prompt = "你是校园活动助手。根据以下信息回答学生的问题。语气友好、具体，像同学间聊天。\n\n"
-                + context + "\n\n学生问题：" + question;
+        msgs.add(Map.of("role", "system", "content", "你是校园活动助手，回答简短（200字内），可使用Markdown。\n\n" + context));
+
+        // 历史消息
+        if (messages != null) {
+            for (Map<String, String> m : messages) {
+                String role = "ai".equals(m.get("role")) ? "assistant" : "user";
+                msgs.add(Map.of("role", role, "content", m.get("content")));
+            }
+        }
+
+        // 当前问题
+        msgs.add(Map.of("role", "user", "content", question));
 
         try {
-            String answer = callDeepSeek(prompt);
+            String answer = callDeepSeek(msgs);
             Map<String, Object> result = new HashMap<>();
             result.put("answer", answer);
             result.put("source", "deepseek");
             return result;
         } catch (Exception e) {
             Map<String, Object> fallback = new HashMap<>();
-            fallback.put("answer", "抱歉，AI 服务暂时不可用（" + e.getMessage() + "）。你可以浏览下方推荐活动或查看活动详情了解信息。");
+            fallback.put("answer", "抱歉，AI 服务暂时不可用（" + e.getMessage() + "）。");
             fallback.put("source", "fallback");
             return fallback;
         }
@@ -107,7 +119,7 @@ public class AiChatServiceImpl implements AiChatService {
         return sb.toString();
     }
 
-    private String callDeepSeek(String prompt) {
+    private String callDeepSeek(List<Map<String, String>> messages) {
         String url = deepSeek.getBaseUrl() + "/chat/completions";
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(15000);
@@ -121,10 +133,7 @@ public class AiChatServiceImpl implements AiChatService {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("model", deepSeek.getModel());
         body.put("stream", false);
-        body.put("messages", Arrays.asList(
-            Map.of("role", "system", "content", "你是校园活动助手，回答要简短（200字以内），语气亲切像同学聊天。可以使用Markdown格式让回答更清晰。"),
-            Map.of("role", "user", "content", prompt)
-        ));
+        body.put("messages", messages);
 
         ResponseEntity<String> response = restTemplate.exchange(
                 url, HttpMethod.POST, new HttpEntity<>(body, headers), String.class);

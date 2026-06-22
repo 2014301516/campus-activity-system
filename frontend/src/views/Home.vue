@@ -168,9 +168,10 @@ async function sendChat(question) {
   if (!q || chatLoading.value) return
   chatMessages.value.push({ role: 'user', content: q })
   chatInput.value = ''
+  const history = chatMessages.value.length > 1 ? chatMessages.value.slice(0, -1) : []
   chatLoading.value = true
   try {
-    const res = await aiChatApi.ask(q)
+    const res = await aiChatApi.ask(q, null, history)
     chatMessages.value.push({ role: 'ai', content: res.data.answer, source: res.data.source })
   } catch (e) {
     chatMessages.value.push({ role: 'ai', content: '抱歉，AI 暂时无法回复，请稍后再试。', source: 'error' })

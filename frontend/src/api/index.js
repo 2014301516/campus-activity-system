@@ -72,7 +72,7 @@ export const recommendationApi = {
 }
 
 export const aiChatApi = {
-  ask: (question, activityId) => request.post('/ai/ask', { question, activityId })
+  ask: (question, activityId, messages) => request.post('/ai/ask', { question, activityId, messages })
 }
 
 // ==================== 管理员 ====================
