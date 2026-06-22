@@ -476,7 +476,7 @@ onMounted(() => {
         </div>
       </div>
       <div class="chat-send-row">
-        <el-input v-model="chatInput" placeholder="输入消息讨论活动..." @keyup.enter="sendChatMessage" :disabled="chatLoading" size="small" />
+        <el-input v-model="chatInput" type="textarea" :rows="3" placeholder="输入消息讨论活动..." @keyup.enter="sendChatMessage" :disabled="chatLoading" />
         <el-button type="primary" size="small" :loading="chatLoading" @click="sendChatMessage">发送</el-button>
       </div>
     </div>
