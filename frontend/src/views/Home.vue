@@ -689,13 +689,13 @@ onBeforeUnmount(() => {
     </aside>
 
     <!-- AI 悬浮聊天按钮 -->
-    <div class="ai-fab" @click="chatVisible = !chatVisible" v-if="authStore.isLoggedIn && authStore.role === 'student'">
+    <div class="ai-fab" @click="chatVisible = !chatVisible" v-if="authStore.isLoggedIn">
       <span v-if="!chatVisible">🤖</span>
       <span v-else>✕</span>
     </div>
 
     <!-- AI 聊天弹窗 -->
-    <div class="ai-chat-dialog" v-if="chatVisible && authStore.isLoggedIn && authStore.role === 'student'">
+    <div class="ai-chat-dialog" v-if="chatVisible && authStore.isLoggedIn">
       <div class="ai-chat-header">
         <span>🤖 AI 活动助手</span>
         <span class="ai-chat-close" @click="chatVisible = false">✕</span>
