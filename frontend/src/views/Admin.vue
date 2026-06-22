@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, reactive, onMounted } from 'vue'
 import { adminApi, activityApi, categoryApi, noticeApi, dashboardApi, aiChatApi } from '@/api'
 import { useAuthStore } from '@/store/auth'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -83,6 +83,35 @@ const userTotal = ref(0)
 const userPage = ref(1)
 const userKeyword = ref('')
 const userLoading = ref(false)
+
+const showCreateUser = ref(false)
+const createUserFormRef = ref(null)
+const createUserForm = reactive({
+  username: '', password: '', realName: '', studentId: '', phone: '', role: 'student'
+})
+const createUserRules = {
+  username: [{ required: true, message: '请输入用户名' }],
+  password: [{ required: true, min: 6, message: '密码至少6位' }],
+  realName: [{ required: true, message: '请输入姓名' }],
+  studentId: [{ required: true, message: '请输入学号' }],
+  phone: [{ required: true, pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确' }],
+  role: [{ required: true, message: '请选择角色' }]
+}
+
+async function handleCreateUser() {
+  if (!createUserFormRef.value) return
+  await createUserFormRef.value.validate(async (valid) => {
+    if (!valid) return
+    try {
+      await adminApi.createUser({ ...createUserForm, email: '' })
+      ElMessage.success('用户创建成功')
+      showCreateUser.value = false
+      createUserForm.username = ''; createUserForm.password = ''; createUserForm.realName = ''
+      createUserForm.studentId = ''; createUserForm.phone = ''; createUserForm.role = 'student'
+      fetchUsers()
+    } catch (e) { /* ignore */ }
+  })
+}
 
 async function fetchUsers() {
   userLoading.value = true
@@ -474,6 +503,7 @@ onMounted(() => {
         <div style="margin-bottom:12px;display:flex;gap:8px">
           <el-input v-model="userKeyword" placeholder="搜索用户名/姓名/学号" style="width:280px" clearable @clear="fetchUsers" @keyup.enter="fetchUsers" />
           <el-button type="primary" @click="fetchUsers">搜索</el-button>
+          <el-button type="success" @click="showCreateUser = true">添加用户</el-button>
         </div>
         <el-table :data="users" stripe v-loading="userLoading">
           <el-table-column label="用户名" prop="username" width="120" />
@@ -666,6 +696,38 @@ onMounted(() => {
       <template #footer>
         <el-button @click="showNoticeDialog = false">取消</el-button>
         <el-button type="primary" @click="publishNotice">发布</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 添加用户对话框 -->
+    <el-dialog v-model="showCreateUser" title="添加用户" width="460px">
+      <el-form :model="createUserForm" :rules="createUserRules" ref="createUserFormRef" label-width="80px">
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="createUserForm.username" placeholder="用户名" />
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+          <el-input v-model="createUserForm.password" type="password" placeholder="至少6位" show-password />
+        </el-form-item>
+        <el-form-item label="姓名" prop="realName">
+          <el-input v-model="createUserForm.realName" placeholder="真实姓名" />
+        </el-form-item>
+        <el-form-item label="学号" prop="studentId">
+          <el-input v-model="createUserForm.studentId" placeholder="学号" />
+        </el-form-item>
+        <el-form-item label="手机号" prop="phone">
+          <el-input v-model="createUserForm.phone" placeholder="11位手机号" />
+        </el-form-item>
+        <el-form-item label="角色" prop="role">
+          <el-select v-model="createUserForm.role" style="width:100%">
+            <el-option label="学生" value="student" />
+            <el-option label="组织者" value="organizer" />
+            <el-option label="管理员" value="admin" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showCreateUser = false">取消</el-button>
+        <el-button type="primary" @click="handleCreateUser">创建</el-button>
       </template>
     </el-dialog>
   </div>

@@ -2,6 +2,7 @@ package com.cas.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cas.common.Result;
+import com.cas.dto.RegisterDTO;
 import com.cas.entity.Category;
 import com.cas.entity.Notice;
 import com.cas.entity.User;
@@ -13,6 +14,7 @@ import com.cas.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.Map;
 
 /**
@@ -55,6 +57,12 @@ public class AdminController {
     /**
      * 修改用户状态
      */
+    @PostMapping("/users")
+    public Result<?> createUser(@Valid @RequestBody RegisterDTO dto) {
+        userService.register(dto);
+        return Result.success("用户创建成功");
+    }
+
     @PutMapping("/users/{id}/status")
     public Result<?> updateUserStatus(@PathVariable Long id, @RequestBody Map<String, Integer> body) {
         Long operatorId = securityUtil.getCurrentUserId();

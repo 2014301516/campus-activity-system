@@ -87,6 +87,7 @@ export const activityChatApi = {
 // ==================== 管理员 ====================
 export const adminApi = {
   getUsers: (params) => request.get('/admin/users', { params }),
+  createUser: (data) => request.post('/admin/users', data),
   updateUserStatus: (id, status) => request.put(`/admin/users/${id}/status`, { status }),
   auditActivity: (id, status, rejectReason) => request.put(`/admin/activity/${id}/audit`, { status, rejectReason }),
   cancelActivity: (id) => request.put(`/admin/activity/${id}/cancel`),
