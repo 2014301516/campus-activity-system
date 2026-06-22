@@ -59,6 +59,13 @@ export const dashboardApi = {
   getOrganizerStats: () => request.get('/dashboard/organizer-stats')
 }
 
+// ==================== 通知 ====================
+export const notificationApi = {
+  getMyNotifications: () => request.get('/notifications'),
+  getUnreadCount: () => request.get('/notifications/unread-count'),
+  markAllRead: () => request.put('/notifications/read-all')
+}
+
 // ==================== AI 推荐 ====================
 export const recommendationApi = {
   getList: (mode = 'local') => request.get('/ai/recommendations', { params: { mode } })

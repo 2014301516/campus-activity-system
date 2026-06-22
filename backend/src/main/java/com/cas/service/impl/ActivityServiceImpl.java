@@ -12,6 +12,7 @@ import com.cas.entity.User;
 import com.cas.mapper.ActivityMapper;
 import com.cas.service.ActivityService;
 import com.cas.service.CategoryService;
+import com.cas.service.NotificationService;
 import com.cas.service.UserService;
 import com.cas.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,9 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
 
     @Autowired
     private SecurityUtil securityUtil;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Override
     public Page<Activity> getActivityPage(ActivityQueryDTO query) {
@@ -226,6 +230,12 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
             activity.setStatus(status);
             activity.setRejectReason("rejected".equals(status) ? rejectReason.trim() : null);
             this.updateById(activity);
+            // 驳回时通知组织者
+            if ("rejected".equals(status)) {
+                notificationService.send(activity.getOrganizerId(),
+                    "活动审核被驳回", "你发布的活动「" + activity.getTitle() + "」未通过审核。理由：" + rejectReason.trim(),
+                    "audit_reject");
+            }
             return;
         }
         if ("cancel_pending".equals(activity.getStatus())) {
@@ -235,6 +245,10 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
             } else {
                 activity.setStatus(resolveActiveStatus(activity));
                 activity.setRejectReason(rejectReason.trim());
+                // 驳回取消申请时通知组织者
+                notificationService.send(activity.getOrganizerId(),
+                    "取消申请被驳回", "你申请取消的活动「" + activity.getTitle() + "」未通过审核，活动已恢复正常状态。理由：" + rejectReason.trim(),
+                    "cancel_reject");
             }
             this.updateById(activity);
             return;

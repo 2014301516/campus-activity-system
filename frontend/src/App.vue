@@ -1,14 +1,24 @@
 <script setup>
 import { useAuthStore } from './store/auth'
 import { useRouter, useRoute } from 'vue-router'
-import { computed } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { notificationApi } from './api'
 
 const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
 const showLayout = computed(() => route.path !== '/login')
+const unreadCount = ref(0)
+
+async function fetchUnreadCount() {
+  if (!authStore.isLoggedIn) return
+  try { const res = await notificationApi.getUnreadCount(); unreadCount.value = res.data.count } catch (e) {}
+}
+
+watch(() => route.path, () => { fetchUnreadCount() })
+onMounted(() => { fetchUnreadCount() })
 
 function handleLogout() {
   authStore.logout()
@@ -36,6 +46,9 @@ function handleLogout() {
               后台管理
             </el-menu-item>
           </el-menu>
+          <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99" class="notify-badge">
+            <el-button :icon="Bell" circle @click="$router.push('/profile')" />
+          </el-badge>
           <el-dropdown class="user-dropdown">
             <span class="user-info">
               <el-avatar :size="32" icon="UserFilled" />
@@ -126,4 +139,6 @@ body {
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
+
+.notify-badge { margin-right: 8px; }
 </style>

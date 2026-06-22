@@ -134,3 +134,20 @@ CREATE TABLE notices (
     PRIMARY KEY (id),
     KEY idx_publisher_id (publisher_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='公告表';
+
+-- ============================================
+-- 8. 通知表 (notifications)
+-- ============================================
+DROP TABLE IF EXISTS notifications;
+CREATE TABLE notifications (
+    id         BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    user_id    BIGINT       NOT NULL COMMENT '接收通知的用户ID',
+    title      VARCHAR(200) NOT NULL COMMENT '通知标题',
+    content    TEXT         NOT NULL COMMENT '通知内容',
+    type       VARCHAR(30)  NOT NULL DEFAULT 'system' COMMENT '类型: audit_reject/cancel_reject/system',
+    is_read    TINYINT      NOT NULL DEFAULT 0 COMMENT '0未读/1已读',
+    created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (id),
+    KEY idx_user_id (user_id),
+    KEY idx_is_read (is_read)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='消息通知表';

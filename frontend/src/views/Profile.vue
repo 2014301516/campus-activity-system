@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
-import { userApi, activityApi, registrationApi, dashboardApi } from '@/api'
+import { userApi, activityApi, registrationApi, dashboardApi, notificationApi } from '@/api'
 import { useAuthStore } from '@/store/auth'
 import { ElMessage } from 'element-plus'
 
@@ -108,9 +108,23 @@ async function fetchProfileStats() {
   }
 }
 
+// ===== 消息通知 =====
+const notifications = ref([])
+const notifLoading = ref(false)
+
+async function fetchNotifications() {
+  notifLoading.value = true
+  try { const res = await notificationApi.getMyNotifications(); notifications.value = res.data || [] } catch (e) {}
+  finally { notifLoading.value = false }
+}
+async function markAllRead() {
+  try { await notificationApi.markAllRead(); notifications.value.forEach(n => n.isRead = 1) } catch (e) {}
+}
+
 onMounted(() => {
   fetchUserInfo()
   fetchProfileStats()
+  fetchNotifications()
 })
 </script>
 
@@ -161,6 +175,23 @@ onMounted(() => {
       </el-form>
 
       <div style="margin-top:20px">
+    <!-- 消息通知 -->
+    <div v-if="notifications.length > 0" class="notif-section" style="margin-top:24px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h3 style="font-size:16px">🔔 消息通知</h3>
+        <el-button size="small" text @click="markAllRead">全部已读</el-button>
+      </div>
+      <div v-loading="notifLoading">
+        <div v-for="n in notifications" :key="n.id" class="notif-item" :class="{ unread: n.isRead === 0 }">
+          <div class="notif-header">
+            <span class="notif-title">{{ n.title }}</span>
+            <span class="notif-time">{{ n.createdAt }}</span>
+          </div>
+          <div class="notif-content">{{ n.content }}</div>
+        </div>
+      </div>
+    </div>
+
         <el-button v-if="!editing" type="primary" @click="editing = true">编辑资料</el-button>
         <template v-else>
           <el-button type="primary" @click="handleSave">保存</el-button>
@@ -230,4 +261,13 @@ onMounted(() => {
     align-items: stretch;
   }
 }
+
+.notif-section { background:#fff; border-radius:8px; padding:16px; }
+.notif-item { padding:12px 0; border-bottom:1px solid #ebeef5; }
+.notif-item:last-child { border-bottom:none; }
+.notif-item.unread { background:#f0f7ff; margin:0 -16px; padding:12px 16px; border-radius:6px; }
+.notif-header { display:flex; justify-content:space-between; margin-bottom:4px; }
+.notif-title { font-size:14px; font-weight:600; color:#303133; }
+.notif-time { font-size:12px; color:#c0c4cc; }
+.notif-content { font-size:13px; color:#606266; line-height:1.5; }
 </style>
