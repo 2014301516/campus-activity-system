@@ -16,6 +16,8 @@ import com.cas.service.ReviewService;
 import com.cas.service.SignInService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -46,6 +48,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
     private static final int MAX_CANDIDATE_COUNT = 8;
     private static final int MAX_RESULT_COUNT = 4;
+    private static final Logger log = LoggerFactory.getLogger(AiRecommendationServiceImpl.class);
 
     @Autowired
     private ActivityService activityService;
@@ -235,6 +238,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
     private Map<Long, RecommendationText> generateReasonsByDeepSeek(UserPreferenceProfile profile, List<ScoredActivity> rankedCandidates) {
         if (!StringUtils.hasText(deepSeekProperties.getApiKey())) {
+            log.warn("DeepSeek API key 未配置，AI 推荐回退到 fallback 文案");
             return new HashMap<>();
         }
 
@@ -267,12 +271,16 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
             JsonNode contentNode = root.path("choices").path(0).path("message").path("content");
             String contentText = extractContentText(contentNode);
             if (!StringUtils.hasText(contentText)) {
+                log.warn("DeepSeek 返回 content 为空，响应体片段: {}", truncateForLog(response.getBody()));
                 return new HashMap<>();
             }
+
+            log.info("DeepSeek 原始推荐内容: {}", truncateForLog(contentText));
 
             JsonNode jsonNode = parseRecommendationJson(contentText);
             JsonNode itemsNode = jsonNode.path("items");
             if (!itemsNode.isArray()) {
+                log.warn("DeepSeek 返回内容未包含 items 数组: {}", truncateForLog(contentText));
                 return new HashMap<>();
             }
 
@@ -297,8 +305,10 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
                 }
                 result.put(activityId, text);
             }
+            log.info("DeepSeek 推荐解析成功，命中 {} 条文案", result.size());
             return result;
         } catch (Exception e) {
+            log.warn("DeepSeek 推荐解析失败，回退到 fallback 文案: {}", e.getMessage());
             return new HashMap<>();
         }
     }
@@ -421,6 +431,14 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
         return "";
     }
 
+    private String truncateForLog(String text) {
+        if (!StringUtils.hasText(text)) {
+            return "";
+        }
+        String normalized = text.replaceAll("\\s+", " ").trim();
+        return normalized.length() > 1200 ? normalized.substring(0, 1200) + "...(truncated)" : normalized;
+    }
+
     private String buildPrompt(UserPreferenceProfile profile, List<ScoredActivity> rankedCandidates) throws Exception {
         Map<String, Object> promptObject = new LinkedHashMap<>();
         promptObject.put("task", "你是校园活动智能推荐助手，请结合用户画像，为候选活动生成自然、有温度、像助手对用户说话的推荐文案。");
@@ -478,6 +496,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
             dto.setAnalysis(StringUtils.hasText(llmText.analysis)
                     ? llmText.analysis
                     : buildFallbackAnalysis(activity, profile, item.getScore()));
+            dto.setSource("deepseek");
             dto.setTag(StringUtils.hasText(llmText.tag) ? llmText.tag : fallbackTag(activity, profile));
             dto.setHighlights(llmText.highlights != null && !llmText.highlights.isEmpty()
                     ? llmText.highlights
@@ -485,6 +504,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
         } else {
             dto.setReason(fallbackReason(activity, profile, item.getScore()));
             dto.setAnalysis(buildFallbackAnalysis(activity, profile, item.getScore()));
+            dto.setSource("fallback");
             dto.setTag(fallbackTag(activity, profile));
             dto.setHighlights(buildFallbackHighlights(activity, profile, item.getScore()));
         }

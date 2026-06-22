@@ -396,7 +396,15 @@ onMounted(() => {
             <div class="ai-card-reason">{{ activity.reason }}</div>
 
             <div v-if="activity.analysis || activity.highlights?.length" class="ai-analysis-box">
-              <div class="ai-analysis-title">AI 分析：为什么推荐你</div>
+              <div class="ai-analysis-header">
+                <div class="ai-analysis-title">AI 分析：为什么推荐你</div>
+                <span
+                  class="ai-source-badge"
+                  :class="activity.source === 'deepseek' ? 'source-deepseek' : 'source-fallback'"
+                >
+                  {{ activity.source === 'deepseek' ? 'DeepSeek生成' : '本地兜底' }}
+                </span>
+              </div>
               <div v-if="activity.analysis" class="ai-analysis-text">{{ activity.analysis }}</div>
               <div v-if="activity.highlights?.length" class="ai-highlights">
                 <span
@@ -865,11 +873,41 @@ onMounted(() => {
   border: 1px solid #dbeafe;
 }
 
-.ai-analysis-title {
+.ai-analysis-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 10px;
+}
+
+.ai-analysis-title {
   font-size: 13px;
   font-weight: 600;
   color: #3a6db1;
+}
+
+.ai-source-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.source-deepseek {
+  color: #0f8f61;
+  background: #e8fbf2;
+  border: 1px solid #b7efd2;
+}
+
+.source-fallback {
+  color: #8a6d1f;
+  background: #fff7e6;
+  border: 1px solid #f6df9b;
 }
 
 .ai-analysis-text {

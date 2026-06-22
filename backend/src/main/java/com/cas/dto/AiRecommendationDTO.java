@@ -25,6 +25,7 @@ public class AiRecommendationDTO {
     private Integer score;
     private String reason;
     private String analysis;
+    private String source;
     private String tag;
     private List<String> highlights;
 }
