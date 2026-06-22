@@ -156,16 +156,11 @@ const chatLoading = ref(false)
 
 const quickQuestions = ['最近有什么适合我的活动？', '哪个活动最热门？', '周末有什么安排？', '帮我推荐一个学术类活动']
 
+import { marked } from 'marked'
+
 function renderMarkdown(text) {
   if (!text) return ''
-  return text
-    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
-    .replace(/\*(.+?)\*/g, '<i>$1</i>')
-    .replace(/`(.+?)`/g, '<code>$1</code>')
-    .replace(/^### (.+)/gm, '<h4>$1</h4>')
-    .replace(/^- (.+)/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
-    .replace(/\n/g, '<br/>')
+  return marked(text, { breaks: true })
 }
 
 async function sendChat(question) {
