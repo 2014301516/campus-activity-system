@@ -122,7 +122,7 @@ public class AiChatServiceImpl implements AiChatService {
         body.put("model", deepSeek.getModel());
         body.put("stream", false);
         body.put("messages", Arrays.asList(
-            Map.of("role", "system", "content", "你是校园活动助手，回答要简短（200字以内），语气亲切像同学聊天。"),
+            Map.of("role", "system", "content", "你是校园活动助手，回答要简短（200字以内），语气亲切像同学聊天。禁止使用Markdown格式（不要用**、-、#等标记符号），直接输出纯文本。"),
             Map.of("role", "user", "content", prompt)
         ));
 

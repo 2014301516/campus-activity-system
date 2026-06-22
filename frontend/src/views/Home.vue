@@ -156,6 +156,18 @@ const chatLoading = ref(false)
 
 const quickQuestions = ['最近有什么适合我的活动？', '哪个活动最热门？', '周末有什么安排？', '帮我推荐一个学术类活动']
 
+function renderMarkdown(text) {
+  if (!text) return ''
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+    .replace(/\*(.+?)\*/g, '<i>$1</i>')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/^### (.+)/gm, '<h4>$1</h4>')
+    .replace(/^- (.+)/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+    .replace(/\n/g, '<br/>')
+}
+
 async function sendChat(question) {
   const q = (question || chatInput.value).trim()
   if (!q || chatLoading.value) return
@@ -570,7 +582,8 @@ onBeforeUnmount(() => {
       <div class="ai-chat-section">
         <div class="chat-messages" v-if="chatMessages.length > 0">
           <div v-for="(m, i) in chatMessages" :key="i" class="chat-msg" :class="m.role">
-            <div class="chat-bubble">{{ m.content }}</div>
+            <div class="chat-bubble" v-if="m.role === 'user'">{{ m.content }}</div>
+            <div class="chat-bubble" v-else v-html="renderMarkdown(m.content)"></div>
           </div>
         </div>
         <div class="quick-questions">
