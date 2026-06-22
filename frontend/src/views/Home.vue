@@ -673,6 +673,33 @@ onBeforeUnmount(() => {
   max-width: 1280px;
   margin: 0 auto;
   position: relative;
+  z-index: 0;
+}
+
+.home-page::before {
+  content: '';
+  position: fixed;
+  top: 60px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background:
+    linear-gradient(rgba(245, 248, 255, 0.78), rgba(245, 248, 255, 0.78)),
+    url('/home-background.jpg') center / cover no-repeat;
+  z-index: -2;
+  pointer-events: none;
+}
+
+.home-page::after {
+  content: '';
+  position: fixed;
+  top: 60px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.18), transparent 42%);
+  z-index: -1;
+  pointer-events: none;
 }
 
 .hero-section {
