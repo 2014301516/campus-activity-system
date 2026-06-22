@@ -187,6 +187,14 @@ function statusTagType(status) {
   return map[status] || 'info'
 }
 
+function exportExcel(activityId) {
+  window.open('/api/activity/' + activityId + '/registrations/export')
+}
+
+function handleCoverUpload(res) {
+  if (res.code === 200) form.value.coverImage = res.data.url
+}
+
 const aiGenLoading = ref(false)
 async function generateDescription() {
   if (!form.value.title || !form.value.categoryId) return
@@ -345,7 +353,10 @@ onMounted(() => {
           </el-button>
         </el-form-item>
         <el-form-item label="封面图">
-          <el-input v-model="form.coverImage" placeholder="请输入图片 URL，例如 https://example.com/cover.jpg" clearable />
+          <el-input v-model="form.coverImage" placeholder="图片URL或点击上传" clearable />
+          <el-upload action="/api/upload" :show-file-list="false" :on-success="handleCoverUpload" style="margin-top:6px">
+            <el-button size="small">📷 上传封面图</el-button>
+          </el-upload>
           <div v-if="form.coverImage" style="margin-top:12px">
             <el-image :src="form.coverImage" fit="cover" style="width:220px;height:120px;border-radius:6px" />
           </div>
@@ -377,6 +388,9 @@ onMounted(() => {
 
     <!-- 报名名单对话框 -->
     <el-dialog v-model="showRegDialog" :title="'报名名单 - ' + viewActivityTitle" width="560px">
+      <div v-if="registrations.length > 0" style="margin-bottom:12px;text-align:right">
+        <el-button size="small" type="success" @click="exportExcel(viewActivityId)">📥 导出Excel</el-button>
+      </div>
       <el-empty v-if="registrations.length === 0" description="当前还没有学生报名这场活动。" />
       <el-table v-else :data="registrations" stripe max-height="400">
         <el-table-column label="姓名" prop="userName" />

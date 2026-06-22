@@ -110,6 +110,7 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
     }
 
     @Override
+    @org.springframework.scheduling.annotation.Scheduled(fixedRate = 60000)
     public synchronized void refreshActivityStatuses() {
         LocalDateTime now = LocalDateTime.now();
         if (lastStatusRefreshAt != null
@@ -239,11 +240,15 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
             activity.setStatus(status);
             activity.setRejectReason("rejected".equals(status) ? rejectReason.trim() : null);
             this.updateById(activity);
-            // 驳回时通知组织者
+            // 通知组织者
             if ("rejected".equals(status)) {
                 notificationService.send(activity.getOrganizerId(),
                     "活动审核被驳回", "你发布的活动「" + activity.getTitle() + "」未通过审核。理由：" + rejectReason.trim(),
                     "audit_reject");
+            } else {
+                notificationService.send(activity.getOrganizerId(),
+                    "活动审核已通过", "你发布的活动「" + activity.getTitle() + "」已通过审核，学生现在可以报名了！",
+                    "audit_approve");
             }
             return;
         }
@@ -251,6 +256,9 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
             if ("approved".equals(status)) {
                 activity.setStatus("cancelled");
                 activity.setRejectReason(null);
+                notificationService.send(activity.getOrganizerId(),
+                    "取消申请已通过", "你申请取消的活动「" + activity.getTitle() + "」已通过审核，活动已取消。",
+                    "cancel_approve");
             } else {
                 activity.setStatus(resolveActiveStatus(activity));
                 activity.setRejectReason(rejectReason.trim());
