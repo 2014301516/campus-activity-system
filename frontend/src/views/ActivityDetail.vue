@@ -751,7 +751,7 @@ onMounted(() => {
   }
 }
 
-.activity-chat-section { margin-top: 20px; border-top: 1px solid #ebeef5; padding-top: 20px; }
+.activity-chat-section { margin: 20px -24px 0; border-top: 1px solid #ebeef5; padding: 20px 24px 0; }
 .chat-messages-box { background: #fafafa; border-radius: 8px; padding: 12px 16px; max-height: 300px; overflow-y: auto; margin-bottom: 12px; }
 .chat-msg-row { padding: 8px 0; border-bottom: 1px solid #f0f0f0; display: flex; gap: 10px; align-items: baseline; }
 .chat-msg-row:last-child { border-bottom: none; }
@@ -759,4 +759,5 @@ onMounted(() => {
 .chat-content { font-size: 14px; color: #303133; flex: 1; }
 .chat-time { font-size: 11px; color: #c0c4cc; flex-shrink: 0; }
 .chat-send-row { display: flex; gap: 8px; }
+.chat-send-row .el-input { flex: 1; }
 </style>
