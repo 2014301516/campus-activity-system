@@ -465,8 +465,11 @@ onMounted(() => {
     </el-dialog>
 
     <!-- 活动聊天室 -->
-    <div class="activity-chat-section" v-if="authStore.isLoggedIn">
-      <h3 style="margin-bottom:12px">💬 活动讨论区</h3>
+    <div class="page-card activity-chat-section" v-if="authStore.isLoggedIn">
+      <div class="section-title-row">
+        <h3>💬 活动讨论区</h3>
+        <span class="section-subtitle">向组织者提问或与其他参与者交流</span>
+      </div>
       <div class="chat-messages-box">
         <div v-if="chatMessages.length === 0" style="text-align:center;padding:24px;color:#c0c4cc">暂无讨论，来发第一条消息吧</div>
         <div v-for="m in chatMessages" :key="m.id" class="chat-msg-row">
@@ -476,8 +479,8 @@ onMounted(() => {
         </div>
       </div>
       <div class="chat-send-row">
-        <el-input v-model="chatInput" type="textarea" :rows="3" placeholder="输入消息讨论活动..." @keyup.enter="sendChatMessage" :disabled="chatLoading" />
-        <el-button type="primary" size="small" :loading="chatLoading" @click="sendChatMessage">发送</el-button>
+        <el-input v-model="chatInput" type="textarea" :rows="2" placeholder="输入消息，按 Enter 发送..." @keyup.enter="sendChatMessage" :disabled="chatLoading" />
+        <el-button type="primary" :loading="chatLoading" @click="sendChatMessage">发送</el-button>
       </div>
     </div>
   </div>
@@ -751,13 +754,16 @@ onMounted(() => {
   }
 }
 
-.activity-chat-section { margin: 20px -24px 0; border-top: 1px solid #ebeef5; padding: 20px 24px 0; }
-.chat-messages-box { background: #fafafa; border-radius: 8px; padding: 12px 16px; max-height: 300px; overflow-y: auto; margin-bottom: 12px; }
-.chat-msg-row { padding: 8px 0; border-bottom: 1px solid #f0f0f0; display: flex; gap: 10px; align-items: baseline; }
+.activity-chat-section { margin-top: 20px; }
+.section-title-row { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
+.section-title-row h3 { margin: 0; font-size: 17px; }
+.section-subtitle { font-size: 13px; color: #909399; }
+.chat-messages-box { background: #fafafa; border-radius: 8px; padding: 12px 16px; max-height: 300px; overflow-y: auto; margin-bottom: 12px; border: 1px solid #ebeef5; }
+.chat-msg-row { padding: 10px 0; border-bottom: 1px solid #f0f0f0; display: flex; gap: 10px; align-items: baseline; }
 .chat-msg-row:last-child { border-bottom: none; }
-.chat-user { font-weight: 600; font-size: 13px; color: #409eff; flex-shrink: 0; min-width: 60px; }
-.chat-content { font-size: 14px; color: #303133; flex: 1; }
-.chat-time { font-size: 11px; color: #c0c4cc; flex-shrink: 0; }
-.chat-send-row { display: flex; gap: 8px; }
-.chat-send-row .el-input { flex: 1; }
+.chat-user { font-weight: 600; font-size: 13px; color: #409eff; flex-shrink: 0; min-width: 64px; }
+.chat-content { font-size: 14px; color: #303133; flex: 1; word-break: break-word; }
+.chat-time { font-size: 12px; color: #c0c4cc; flex-shrink: 0; }
+.chat-send-row { display: flex; gap: 10px; align-items: flex-end; }
+.chat-send-row .el-textarea { flex: 1; }
 </style>
