@@ -51,8 +51,8 @@ public class AiChatServiceImpl implements AiChatService {
         // 历史消息
         if (messages != null) {
             for (Map<String, String> m : messages) {
-                String role = "ai".equals(m.get("role")) ? "assistant" : "user";
-                msgs.add(Map.of("role", role, "content", m.get("content")));
+                String msgRole = "ai".equals(m.get("role")) ? "assistant" : "user";
+                msgs.add(Map.of("role", msgRole, "content", m.get("content")));
             }
         }
 
