@@ -34,7 +34,7 @@ public class FileController {
         }
 
         Map<String, String> result = new HashMap<>();
-        result.put("url", "/uploads/" + fileName);
+        result.put("url", "http://localhost:8080/uploads/" + fileName);
         return Result.success(result);
     }
 }

@@ -370,9 +370,12 @@ onMounted(() => {
           </el-button>
         </el-form-item>
         <el-form-item label="封面图">
-          <el-input v-model="form.coverImage" placeholder="图片URL或点击上传" clearable />
+          <el-input v-model="form.coverImage" placeholder="输入URL或点击上传" clearable />
           <input type="file" accept="image/*" @change="handleCoverFile" style="display:none" ref="coverFileInput" />
-          <el-button size="small" :loading="coverUploading" @click="coverFileInput.click()">📷 上传封面图</el-button>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+            <el-button size="small" :loading="coverUploading" @click="coverFileInput.click()">📷 本地上传</el-button>
+            <img v-if="form.coverImage" :src="form.coverImage" style="height:60px;border-radius:6px;border:1px solid #dcdfe6" />
+          </div>
           <div v-if="form.coverImage" style="margin-top:12px">
             <el-image :src="form.coverImage" fit="cover" style="width:220px;height:120px;border-radius:6px" />
           </div>
