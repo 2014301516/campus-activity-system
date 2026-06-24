@@ -40,6 +40,7 @@ public class SecurityConfig {
             .antMatchers(HttpMethod.GET, "/api/activity/**").permitAll()
             .antMatchers(HttpMethod.GET, "/api/category/**").permitAll()
             .antMatchers(HttpMethod.GET, "/api/review/activity/**").permitAll()
+            .antMatchers("/uploads/**").permitAll()
             .antMatchers(HttpMethod.GET, "/api/notice/list").permitAll()
             // 管理员接口
             .antMatchers("/api/admin/**").hasRole("ADMIN")
