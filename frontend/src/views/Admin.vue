@@ -230,6 +230,11 @@ function handleAllActivityPageChange(page) {
   fetchAllActivities()
 }
 
+function isModifyApply(row) {
+  if (!row.createdAt || !row.updatedAt) return false
+  return row.currentParticipants > 0 || new Date(row.updatedAt) - new Date(row.createdAt) > 60000
+}
+
 function canCancelActivity(row) {
   return row.status !== 'ended' && row.status !== 'cancelled' && row.status !== 'cancel_pending'
 }
@@ -552,8 +557,8 @@ onMounted(() => {
             <el-table-column label="组织者" prop="organizerName" width="100" />
             <el-table-column label="审核类型" width="110">
               <template #default="{ row }">
-                <el-tag :type="row.status === 'cancel_pending' ? 'warning' : 'info'" size="small">
-                  {{ row.status === 'cancel_pending' ? '取消申请' : '发布审核' }}
+                <el-tag :type="row.status === 'cancel_pending' ? 'warning' : isModifyApply(row) ? 'info' : 'info'" size="small">
+                  {{ row.status === 'cancel_pending' ? '取消申请' : isModifyApply(row) ? '修改申请' : '新建申请' }}
                 </el-tag>
               </template>
             </el-table-column>

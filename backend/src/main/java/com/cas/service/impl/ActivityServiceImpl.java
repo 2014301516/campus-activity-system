@@ -178,9 +178,17 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
             activity.setStatus("pending");
             activity.setRejectReason(null);
             if (!"rejected".equals(currentStatus)) {
+                // 通知组织者
                 notificationService.send(userId,
                     "活动修改已提交审核", "你编辑的活动「" + activity.getTitle() + "」已重新进入待审核状态，请等待管理员审核。",
                     "audit_resubmit");
+                // 通知所有管理员
+                List<com.cas.entity.User> admins = userService.lambdaQuery().eq(com.cas.entity.User::getRole, "admin").list();
+                for (com.cas.entity.User admin : admins) {
+                    notificationService.send(admin.getId(),
+                        "收到活动修改申请", "组织者修改了活动「" + activity.getTitle() + "」（原状态：" + currentStatus + "），请前往后台审核。",
+                        "audit_resubmit");
+                }
             }
         }
         this.updateById(activity);
