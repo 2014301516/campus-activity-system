@@ -76,8 +76,11 @@ function openCreate() {
 }
 
 // 打开编辑对话框
+const editingStatus = ref('')
+
 function openEdit(activity) {
   isEdit.value = true
+  editingStatus.value = activity.status
   form.value = {
     id: activity.id,
     title: activity.title,
@@ -99,7 +102,16 @@ async function handleSubmit() {
     if (!valid) return
     try {
       if (isEdit.value) {
-        await activityApi.update(form.value.id, form.value)
+        let modifyReason = ''
+        if (editingStatus.value === 'approved' || editingStatus.value === 'ongoing') {
+          try {
+            const { value } = await ElMessageBox.prompt('请说明本次修改了什么内容，管理员审核时会看到', '修改说明', {
+              inputType: 'textarea', inputPlaceholder: '例如：修改了活动时间、更新了活动地点...'
+            })
+            modifyReason = value?.trim() || ''
+          } catch (e) { return }  // 用户取消
+        }
+        await activityApi.update(form.value.id, { ...form.value, modifyReason })
         ElMessage.success('已提交修改，等待管理员重新审核')
       } else {
         await activityApi.create(form.value)

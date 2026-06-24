@@ -39,4 +39,6 @@ public class ActivitySaveDTO {
 
     @NotNull(message = "请设置最大报名人数")
     private Integer maxParticipants;
+
+    private String modifyReason;  // 修改活动时填写的修改说明
 }

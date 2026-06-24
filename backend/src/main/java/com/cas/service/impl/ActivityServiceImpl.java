@@ -177,7 +177,11 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         // 已通过/进行中/被驳回的活动在修改后重新进入待审核
         if ("approved".equals(currentStatus) || "ongoing".equals(currentStatus) || "rejected".equals(currentStatus)) {
             activity.setStatus("pending");
-            activity.setRejectReason(null);
+            if ("approved".equals(currentStatus) || "ongoing".equals(currentStatus)) {
+                activity.setRejectReason("【修改说明】" + (dto.getModifyReason() != null ? dto.getModifyReason() : "未填写"));
+            } else {
+                activity.setRejectReason(null);
+            }
             if (!"rejected".equals(currentStatus)) {
                 // 通知组织者
                 notificationService.send(userId,
