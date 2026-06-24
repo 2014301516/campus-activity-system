@@ -411,8 +411,10 @@ function auditReasonText(row) {
   if (row.status === 'cancel_pending') {
     return row.cancelRequestReason || '未填写'
   }
-  if (row.status === 'rejected') {
-    return row.rejectReason || '未填写'
+  if (row.status === 'rejected' || row.status === 'pending') {
+    if (row.rejectReason) return row.rejectReason
+    if (isModifyApply(row)) return '组织者修改了活动内容'
+    return row.status === 'pending' ? '新建活动申请' : '-'
   }
   return '-'
 }
@@ -569,7 +571,7 @@ onMounted(() => {
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="申请/驳回说明" min-width="220">
+            <el-table-column label="申请说明" min-width="220">
               <template #default="{ row }">
                 <div class="audit-reason-cell">
                   {{ auditReasonText(row) }}
