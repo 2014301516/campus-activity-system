@@ -236,6 +236,8 @@ function isModifyApply(row) {
   return new Date(row.updatedAt).getTime() - new Date(row.createdAt).getTime() > 10000
 }
 
+function openActivity(id) { window.open('/#/activity/' + id) }
+
 function canCancelActivity(row) {
   return row.status !== 'ended' && row.status !== 'cancelled' && row.status !== 'cancel_pending'
 }
@@ -555,7 +557,7 @@ onMounted(() => {
           <el-table v-else :data="pendingActivities" stripe>
             <el-table-column label="标题" min-width="180">
               <template #default="{ row }">
-                <el-link type="primary" @click="window.open('/#/activity/' + row.id)">{{ row.title }}</el-link>
+                <el-link type="primary" @click="openActivity(row.id)">{{ row.title }}</el-link>
               </template>
             </el-table-column>
             <el-table-column label="分类" prop="categoryName" width="100" />
@@ -589,7 +591,7 @@ onMounted(() => {
                   {{ row.status === 'cancel_pending' ? '驳回申请' : '驳回' }}
                 </el-button>
                 <el-button size="small" type="warning" :loading="aiSuggestionLoading === row.id" @click="showAiSuggestion(row)">🤖 AI建议</el-button>
-                <el-button size="small" @click="window.open('/#/activity/' + row.id)">查看</el-button>
+                <el-button size="small" @click="openActivity(row.id)">查看</el-button>
               </template>
             </el-table-column>
           </el-table>
