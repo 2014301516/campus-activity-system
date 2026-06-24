@@ -354,7 +354,7 @@ onMounted(() => {
         </el-form-item>
         <el-form-item label="封面图">
           <el-input v-model="form.coverImage" placeholder="图片URL或点击上传" clearable />
-          <el-upload action="/api/upload" :show-file-list="false" :on-success="handleCoverUpload" style="margin-top:6px">
+          <el-upload action="/api/upload" :headers="{ Authorization: 'Bearer ' + authStore.token }" :show-file-list="false" :on-success="handleCoverUpload" style="margin-top:6px">
             <el-button size="small">📷 上传封面图</el-button>
           </el-upload>
           <div v-if="form.coverImage" style="margin-top:12px">
