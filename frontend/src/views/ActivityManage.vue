@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
-import { activityApi, registrationApi, signInApi, categoryApi, dashboardApi, aiChatApi } from '@/api'
+import { activityApi, registrationApi, signInApi, categoryApi, dashboardApi, aiChatApi, uploadApi } from '@/api'
 import { useAuthStore } from '@/store/auth'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import VChart from 'vue-echarts'
@@ -191,8 +191,25 @@ function exportExcel(activityId) {
   window.open('/api/activity/' + activityId + '/registrations/export')
 }
 
+const coverUploading = ref(false)
+const coverFileInput = ref(null)
 function handleCoverUpload(res) {
   if (res.code === 200) form.value.coverImage = res.data.url
+}
+async function handleCoverFile(e) {
+  const file = e.target.files[0]
+  if (!file || file.size > 5 * 1024 * 1024) { ElMessage.warning('图片不能超过5MB'); return }
+  coverUploading.value = true
+  const reader = new FileReader()
+  reader.onload = async () => {
+    try {
+      const res = await uploadApi.uploadBase64(reader.result)
+      form.value.coverImage = res.data.url
+      ElMessage.success('上传成功')
+    } catch (err) { /* ignore */ }
+    finally { coverUploading.value = false }
+  }
+  reader.readAsDataURL(file)
 }
 
 const aiGenLoading = ref(false)
@@ -354,9 +371,8 @@ onMounted(() => {
         </el-form-item>
         <el-form-item label="封面图">
           <el-input v-model="form.coverImage" placeholder="图片URL或点击上传" clearable />
-          <el-upload action="/api/upload" :headers="{ Authorization: 'Bearer ' + authStore.token }" :show-file-list="false" :on-success="handleCoverUpload" style="margin-top:6px">
-            <el-button size="small">📷 上传封面图</el-button>
-          </el-upload>
+          <input type="file" accept="image/*" @change="handleCoverFile" style="display:none" ref="coverFileInput" />
+          <el-button size="small" :loading="coverUploading" @click="coverFileInput.click()">📷 上传封面图</el-button>
           <div v-if="form.coverImage" style="margin-top:12px">
             <el-image :src="form.coverImage" fit="cover" style="width:220px;height:120px;border-radius:6px" />
           </div>

@@ -79,6 +79,10 @@ export const aiChatApi = {
 }
 
 // ==================== 活动聊天室 ====================
+export const uploadApi = {
+  uploadBase64: (base64) => request.post('/upload-base64', { file: base64 })
+}
+
 export const activityChatApi = {
   getMessages: (activityId) => request.get(`/activity/${activityId}/chats`),
   send: (activityId, content) => request.post(`/activity/${activityId}/chats`, { content })

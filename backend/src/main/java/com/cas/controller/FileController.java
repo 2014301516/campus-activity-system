@@ -1,38 +1,40 @@
 package com.cas.controller;
 
 import com.cas.common.Result;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.io.FileOutputStream;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api")
 public class FileController {
 
-    @Value("${file.upload-dir:uploads}")
-    private String uploadDir;
+    /** 接收 base64 图片，存到 uploads 目录，返回 URL */
+    @PostMapping("/upload-base64")
+    public Result<Map<String, String>> uploadBase64(@RequestBody Map<String, String> body) throws Exception {
+        String base64 = body.get("file");
+        if (base64 == null || base64.isEmpty()) return Result.error("文件为空");
 
-    @PostMapping("/upload")
-    public Result<Map<String, String>> upload(@RequestParam("file") MultipartFile file) throws Exception {
-        if (file.isEmpty()) return Result.error("文件为空");
+        // 去掉 data:image/png;base64, 前缀
+        if (base64.contains(",")) {
+            base64 = base64.substring(base64.indexOf(",") + 1);
+        }
 
-        String original = file.getOriginalFilename();
-        String ext = original.substring(original.lastIndexOf("."));
+        byte[] bytes = Base64.getDecoder().decode(base64);
+        String ext = ".jpg";
         String fileName = UUID.randomUUID().toString() + ext;
 
-        String absolutePath = new File(uploadDir).getAbsolutePath();
-        File dir = new File(absolutePath);
+        File dir = new File(new File("uploads").getAbsolutePath());
         if (!dir.exists()) dir.mkdirs();
 
-        file.transferTo(new File(dir, fileName));
+        try (FileOutputStream fos = new FileOutputStream(new File(dir, fileName))) {
+            fos.write(bytes);
+        }
 
         Map<String, String> result = new HashMap<>();
-        result.put("url", "/" + uploadDir + "/" + fileName);
+        result.put("url", "/uploads/" + fileName);
         return Result.success(result);
     }
 }
