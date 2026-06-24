@@ -555,7 +555,7 @@ onMounted(() => {
           <el-table v-else :data="pendingActivities" stripe>
             <el-table-column label="标题" min-width="180">
               <template #default="{ row }">
-                <el-link type="primary" @click="$router.push('/activity/' + row.id)">{{ row.title }}</el-link>
+                <el-link type="primary" @click="window.open('/#/activity/' + row.id)">{{ row.title }}</el-link>
               </template>
             </el-table-column>
             <el-table-column label="分类" prop="categoryName" width="100" />
@@ -580,7 +580,7 @@ onMounted(() => {
             <el-table-column label="最近更新" width="140">
               <template #default="{ row }">{{ formatTime(row.updatedAt) }}</template>
             </el-table-column>
-            <el-table-column label="操作" width="300">
+            <el-table-column label="操作" width="360">
               <template #default="{ row }">
                 <el-button size="small" type="success" @click="handleAudit(row, 'approved')">
                   {{ row.status === 'cancel_pending' ? '同意取消' : '通过' }}
@@ -589,6 +589,7 @@ onMounted(() => {
                   {{ row.status === 'cancel_pending' ? '驳回申请' : '驳回' }}
                 </el-button>
                 <el-button size="small" type="warning" :loading="aiSuggestionLoading === row.id" @click="showAiSuggestion(row)">🤖 AI建议</el-button>
+                <el-button size="small" @click="window.open('/#/activity/' + row.id)">查看</el-button>
               </template>
             </el-table-column>
           </el-table>
