@@ -573,8 +573,11 @@ onMounted(() => {
                 </div>
               </template>
             </el-table-column>
-            <el-table-column label="时间" min-width="200">
+            <el-table-column label="活动时间" min-width="200">
               <template #default="{ row }">{{ formatTime(row.startTime) }} ~ {{ formatTime(row.endTime) }}</template>
+            </el-table-column>
+            <el-table-column label="最近更新" width="140">
+              <template #default="{ row }">{{ formatTime(row.updatedAt) }}</template>
             </el-table-column>
             <el-table-column label="操作" width="300">
               <template #default="{ row }">

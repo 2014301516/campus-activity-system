@@ -64,7 +64,8 @@ export const dashboardApi = {
 export const notificationApi = {
   getMyNotifications: () => request.get('/notifications'),
   getUnreadCount: () => request.get('/notifications/unread-count'),
-  markAllRead: () => request.put('/notifications/read-all')
+  markAllRead: () => request.put('/notifications/read-all'),
+  markOneRead: (id) => request.put('/notifications/' + id + '/read')
 }
 
 // ==================== AI 推荐 ====================

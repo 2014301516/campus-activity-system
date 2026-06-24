@@ -18,4 +18,7 @@ public interface NotificationService extends IService<Notification> {
 
     /** 标记全部已读 */
     void markAllRead(Long userId);
+
+    /** 标记单条已读 */
+    void markOneRead(Long notificationId, Long userId);
 }

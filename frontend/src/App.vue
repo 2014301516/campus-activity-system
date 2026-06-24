@@ -98,7 +98,10 @@ async function sendChat(question) {
   }
 }
 
-onMounted(() => { fetchUnreadCount() })
+onMounted(() => {
+  fetchUnreadCount()
+  window.addEventListener('notification-read', fetchUnreadCount)
+})
 
 function handleLogout() {
   authStore.logout()

@@ -44,4 +44,11 @@ public class NotificationController {
         notificationService.markAllRead(userId);
         return Result.success("已全部标为已读");
     }
+
+    @PutMapping("/notifications/{id}/read")
+    public Result<?> markOneRead(@PathVariable Long id) {
+        Long userId = securityUtil.getCurrentUserId();
+        notificationService.markOneRead(id, userId);
+        return Result.success("已标为已读");
+    }
 }

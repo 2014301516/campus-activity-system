@@ -6,6 +6,15 @@ import { ElMessage } from 'element-plus'
 const loading = ref(false)
 const notifications = ref([])
 
+function typeLabel(type) {
+  const map = {
+    audit_reject: '审核驳回', audit_approve: '审核通过',
+    cancel_reject: '取消驳回', cancel_approve: '取消通过',
+    audit_resubmit: '修改申请', system: '系统通知'
+  }
+  return map[type] || type
+}
+
 async function fetchNotifications() {
   loading.value = true
   try { const res = await notificationApi.getMyNotifications(); notifications.value = res.data || [] } catch (e) {}
@@ -13,7 +22,20 @@ async function fetchNotifications() {
 }
 
 async function markAllRead() {
-  try { await notificationApi.markAllRead(); notifications.value.forEach(n => n.isRead = 1); ElMessage.success('已全部标为已读') } catch (e) {}
+  try {
+    await notificationApi.markAllRead()
+    notifications.value.forEach(n => n.isRead = 1)
+    ElMessage.success('已全部标为已读')
+    window.dispatchEvent(new Event('notification-read'))
+  } catch (e) {}
+}
+
+async function markOneRead(n) {
+  try {
+    await notificationApi.markOneRead(n.id)
+    n.isRead = 1
+    window.dispatchEvent(new Event('notification-read'))
+  } catch (e) {}
 }
 
 onMounted(fetchNotifications)
@@ -40,24 +62,16 @@ onMounted(fetchNotifications)
           <div class="notif-body">{{ n.content }}</div>
           <div class="notif-footer">
             <span class="notif-type">{{ typeLabel(n.type) }}</span>
-            <span class="notif-time">{{ n.createdAt }}</span>
+            <div style="display:flex;align-items:center;gap:12px">
+              <span class="notif-time">{{ n.createdAt }}</span>
+              <el-button v-if="n.isRead === 0" size="small" text type="primary" @click="markOneRead(n)">标为已读</el-button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
-
-<script>
-export default {
-  methods: {
-    typeLabel(type) {
-      const map = { audit_reject: '审核驳回', cancel_reject: '取消驳回', system: '系统通知' }
-      return map[type] || type
-    }
-  }
-}
-</script>
 
 <style scoped>
 .notif-card {
