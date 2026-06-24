@@ -232,7 +232,7 @@ function handleAllActivityPageChange(page) {
 
 function isModifyApply(row) {
   if (!row.createdAt || !row.updatedAt) return false
-  return new Date(row.updatedAt).getTime() - new Date(row.createdAt).getTime() > 300000
+  return new Date(row.updatedAt).getTime() - new Date(row.createdAt).getTime() > 10000
 }
 
 function canCancelActivity(row) {
@@ -562,7 +562,7 @@ onMounted(() => {
             <el-table-column label="审核类型" width="110">
               <template #default="{ row }">
                 <el-tag :type="row.status === 'cancel_pending' ? 'warning' : isModifyApply(row) ? 'info' : 'info'" size="small">
-                  {{ row.status === 'cancel_pending' ? '取消申请' : isModifyApply(row) ? '修改申请' : '新建申请' }}
+                  {{ row.status === 'cancel_pending' ? '取消申请' : isModifyApply(row) ? '修改申请' : '发布申请' }}
                 </el-tag>
               </template>
             </el-table-column>
