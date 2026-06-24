@@ -173,10 +173,15 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
 
         String currentStatus = activity.getStatus();
         BeanUtil.copyProperties(dto, activity);
-        // 被驳回的活动在修改后重新进入待审核，便于重新演示审核流程
-        if ("rejected".equals(currentStatus)) {
+        // 已通过/进行中/被驳回的活动在修改后重新进入待审核
+        if ("approved".equals(currentStatus) || "ongoing".equals(currentStatus) || "rejected".equals(currentStatus)) {
             activity.setStatus("pending");
             activity.setRejectReason(null);
+            if (!"rejected".equals(currentStatus)) {
+                notificationService.send(userId,
+                    "活动修改已提交审核", "你编辑的活动「" + activity.getTitle() + "」已重新进入待审核状态，请等待管理员审核。",
+                    "audit_resubmit");
+            }
         }
         this.updateById(activity);
         return activity;

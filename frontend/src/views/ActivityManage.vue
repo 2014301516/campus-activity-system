@@ -100,7 +100,7 @@ async function handleSubmit() {
     try {
       if (isEdit.value) {
         await activityApi.update(form.value.id, form.value)
-        ElMessage.success('更新成功')
+        ElMessage.success('已提交修改，等待管理员重新审核')
       } else {
         await activityApi.create(form.value)
         ElMessage.success('创建成功')
@@ -262,22 +262,22 @@ onMounted(() => {
     </div>
 
     <!-- 组织者数据概览 -->
-    <div class="stats-grid" v-if="organizerStats">
-      <div class="stat-card stat-blue">
-        <div class="stat-value">{{ organizerStats.totalActivities }}</div>
-        <div class="stat-label">已发布活动</div>
+    <div class="org-stats-cards" v-if="organizerStats">
+      <div class="org-stat blue">
+        <div class="org-stat-value">{{ organizerStats.totalActivities }}</div>
+        <div class="org-stat-label">已发布活动</div>
       </div>
-      <div class="stat-card stat-orange">
-        <div class="stat-value">{{ (organizerStats.statusStats?.pending || 0) + (organizerStats.statusStats?.cancel_pending || 0) }}</div>
-        <div class="stat-label">待审核</div>
+      <div class="org-stat orange">
+        <div class="org-stat-value">{{ (organizerStats.statusStats?.pending || 0) + (organizerStats.statusStats?.cancel_pending || 0) }}</div>
+        <div class="org-stat-label">待审核</div>
       </div>
-      <div class="stat-card stat-green">
-        <div class="stat-value">{{ organizerStats.statusStats?.ongoing || 0 }}</div>
-        <div class="stat-label">进行中</div>
+      <div class="org-stat green">
+        <div class="org-stat-value">{{ organizerStats.statusStats?.ongoing || 0 }}</div>
+        <div class="org-stat-label">进行中</div>
       </div>
-      <div class="stat-card stat-purple">
-        <div class="stat-value">{{ organizerStats.totalRegistrations }}</div>
-        <div class="stat-label">总报名人次</div>
+      <div class="org-stat purple">
+        <div class="org-stat-value">{{ organizerStats.totalRegistrations }}</div>
+        <div class="org-stat-label">总报名人次</div>
       </div>
     </div>
 
@@ -470,6 +470,24 @@ onMounted(() => {
 }
 
 /* 组织者统计 */
+.org-stats-cards {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.org-stat {
+  flex: 1;
+  border-radius: 10px;
+  padding: 20px 16px;
+  color: #fff;
+  text-align: center;
+}
+.org-stat .org-stat-value { font-size: 28px; font-weight: 700; }
+.org-stat .org-stat-label { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+.org-stat.blue   { background: linear-gradient(135deg, #409eff, #337ecc); }
+.org-stat.orange { background: linear-gradient(135deg, #e6a23c, #cf9236); }
+.org-stat.green  { background: linear-gradient(135deg, #67c23a, #529b2e); }
+.org-stat.purple { background: linear-gradient(135deg, #a855f7, #9333ea); }
 .org-chart-wrap {
   background: #fafafa;
   border-radius: 8px;
