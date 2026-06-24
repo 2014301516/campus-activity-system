@@ -71,17 +71,13 @@ async function fetchCategories() {
 // 打开创建对话框
 function openCreate() {
   isEdit.value = false
-  editingStatus.value = ''
   form.value = { id: null, title: '', description: '', categoryId: null, location: '', startTime: '', endTime: '', maxParticipants: 50, coverImage: '' }
   showDialog.value = true
 }
 
 // 打开编辑对话框
-const editingStatus = ref('')
-
 function openEdit(activity) {
   isEdit.value = true
-  editingStatus.value = activity.status
   form.value = {
     id: activity.id,
     title: activity.title,
@@ -104,14 +100,13 @@ async function handleSubmit() {
     try {
       if (isEdit.value) {
         let modifyReason = ''
-        if (editingStatus.value === 'approved' || editingStatus.value === 'ongoing') {
-          try {
-            const { value } = await ElMessageBox.prompt('请说明本次修改了什么内容，管理员审核时会看到', '修改说明', {
-              inputType: 'textarea', inputPlaceholder: '例如：修改了活动时间、更新了活动地点...'
-            })
-            modifyReason = value?.trim() || ''
-          } catch (e) { return }  // 用户取消
-        }
+        try {
+          const { value } = await ElMessageBox.prompt('请说明本次修改了什么内容（可留空直接确定）', '修改说明', {
+            inputType: 'textarea', inputPlaceholder: '例如：修改了活动时间、更新了活动地点...',
+            inputValidator: () => true  // 允许空值
+          })
+          modifyReason = value?.trim() || ''
+        } catch (e) { return }
         await activityApi.update(form.value.id, { ...form.value, modifyReason })
         ElMessage.success('已提交修改，等待管理员重新审核')
       } else {
