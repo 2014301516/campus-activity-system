@@ -219,6 +219,7 @@ async function generateDescription() {
   try {
     const res = await aiChatApi.generateDescription(form.value.title, form.value.categoryId)
     form.value.description = res.data.description
+    formRef.value?.clearValidate('description')
   } catch (e) { /* ignore */ }
   finally { aiGenLoading.value = false }
 }
