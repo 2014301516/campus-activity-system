@@ -367,7 +367,7 @@ onMounted(() => {
         </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input v-model="form.description" type="textarea" :rows="4" placeholder="活动详细描述" />
-          <el-button size="small" type="button" style="margin-top:6px" :disabled="!form.title || !form.categoryId" :loading="aiGenLoading" @click="generateDescription">
+          <el-button size="small" native-type="button" style="margin-top:6px" :disabled="!form.title || !form.categoryId" :loading="aiGenLoading" @click="generateDescription">
             ✨ AI 生成描述
           </el-button>
         </el-form-item>
