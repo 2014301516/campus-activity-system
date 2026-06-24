@@ -25,7 +25,8 @@ public class FileController {
         String ext = original.substring(original.lastIndexOf("."));
         String fileName = UUID.randomUUID().toString() + ext;
 
-        File dir = new File(uploadDir);
+        String absolutePath = new File(uploadDir).getAbsolutePath();
+        File dir = new File(absolutePath);
         if (!dir.exists()) dir.mkdirs();
 
         file.transferTo(new File(dir, fileName));

@@ -552,7 +552,11 @@ onMounted(() => {
         <div v-loading="auditLoading">
           <el-empty v-if="pendingActivities.length === 0" description="暂无待审核活动或取消申请" />
           <el-table v-else :data="pendingActivities" stripe>
-            <el-table-column label="标题" prop="title" min-width="180" />
+            <el-table-column label="标题" min-width="180">
+              <template #default="{ row }">
+                <el-link type="primary" @click="$router.push('/activity/' + row.id)">{{ row.title }}</el-link>
+              </template>
+            </el-table-column>
             <el-table-column label="分类" prop="categoryName" width="100" />
             <el-table-column label="组织者" prop="organizerName" width="100" />
             <el-table-column label="审核类型" width="110">
