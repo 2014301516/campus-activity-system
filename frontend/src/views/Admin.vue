@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, reactive, onMounted } from 'vue'
+import { computed, ref, reactive, onMounted, watch } from 'vue'
 import { adminApi, activityApi, categoryApi, noticeApi, dashboardApi, aiChatApi } from '@/api'
 import { useAuthStore } from '@/store/auth'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -12,7 +12,8 @@ import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/compon
 use([CanvasRenderer, PieChart, BarChart, LineChart, GridComponent, LegendComponent, TooltipComponent])
 
 const authStore = useAuthStore()
-const activeTab = ref('dashboard')
+const activeTab = ref(localStorage.getItem('adminActiveTab') || 'dashboard')
+watch(activeTab, (val) => localStorage.setItem('adminActiveTab', val))
 
 // ==================== 数据统计 ====================
 const stats = ref(null)
