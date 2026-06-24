@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, nextTick } from 'vue'
 import { activityApi, registrationApi, signInApi, categoryApi, dashboardApi, aiChatApi, uploadApi } from '@/api'
 import { useAuthStore } from '@/store/auth'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -219,6 +219,7 @@ async function generateDescription() {
   try {
     const res = await aiChatApi.generateDescription(form.value.title, form.value.categoryId)
     form.value.description = res.data.description
+    await nextTick()
     formRef.value?.clearValidate('description')
   } catch (e) { /* ignore */ }
   finally { aiGenLoading.value = false }
@@ -366,7 +367,7 @@ onMounted(() => {
         </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input v-model="form.description" type="textarea" :rows="4" placeholder="活动详细描述" />
-          <el-button size="small" style="margin-top:6px" :disabled="!form.title || !form.categoryId" :loading="aiGenLoading" @click="generateDescription">
+          <el-button size="small" type="button" style="margin-top:6px" :disabled="!form.title || !form.categoryId" :loading="aiGenLoading" @click="generateDescription">
             ✨ AI 生成描述
           </el-button>
         </el-form-item>
