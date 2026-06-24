@@ -71,6 +71,7 @@ async function fetchCategories() {
 // 打开创建对话框
 function openCreate() {
   isEdit.value = false
+  editingStatus.value = ''
   form.value = { id: null, title: '', description: '', categoryId: null, location: '', startTime: '', endTime: '', maxParticipants: 50, coverImage: '' }
   showDialog.value = true
 }
