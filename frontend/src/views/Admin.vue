@@ -232,7 +232,7 @@ function handleAllActivityPageChange(page) {
 
 function isModifyApply(row) {
   if (!row.createdAt || !row.updatedAt) return false
-  return row.currentParticipants > 0 || new Date(row.updatedAt) - new Date(row.createdAt) > 60000
+  return new Date(row.updatedAt).getTime() - new Date(row.createdAt).getTime() > 300000
 }
 
 function canCancelActivity(row) {
