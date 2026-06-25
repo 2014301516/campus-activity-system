@@ -184,7 +184,7 @@ function toggleMode() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: url('/bj.jpg') center/cover no-repeat;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .login-card {
