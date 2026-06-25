@@ -101,85 +101,78 @@ function toggleMode() {
 
 <template>
   <div class="login-page">
-    <!-- 背景装饰 -->
-    <div class="bg-circles">
-      <div class="circle c1"></div>
-      <div class="circle c2"></div>
-      <div class="circle c3"></div>
-      <div class="circle c4"></div>
-    </div>
+    <div class="login-card">
+      <!-- 头部 -->
+      <div class="login-header">
+        <h1>🎪 校园活动管理系统</h1>
+        <p>Campus Activity Management System</p>
+      </div>
 
-    <!-- 登录卡片 -->
-    <div class="login-card" v-if="isLogin">
-      <div class="card-left">
-        <div class="brand-area">
-          <div class="brand-icon">🎪</div>
-          <h2>校园活动管理</h2>
-          <p>发现精彩校园生活</p>
-        </div>
-        <div class="brand-features">
-          <div class="feat"><span>📋</span>活动发布与审核</div>
-          <div class="feat"><span>✅</span>报名签到评价</div>
-          <div class="feat"><span>📊</span>数据统计仪表盘</div>
-          <div class="feat"><span>🤖</span>AI 智能助手</div>
-        </div>
-      </div>
-      <div class="card-right">
-        <h2 class="form-title">欢迎登录</h2>
-        <p class="form-sub">使用账号密码登录系统</p>
-        <el-form ref="loginFormRef" :model="loginForm" :rules="{ username: [{ required: true, message: '请输入用户名' }], password: [{ required: true, message: '请输入密码' }] }"
-                 size="large" class="login-form">
-          <el-form-item prop="username">
-            <el-input v-model="loginForm.username" placeholder="用户名 / 学号" prefix-icon="User" />
-          </el-form-item>
-          <el-form-item prop="password">
-            <el-input v-model="loginForm.password" type="password" placeholder="密码" prefix-icon="Lock" @keyup.enter="handleLogin" show-password />
-          </el-form-item>
-          <el-button type="primary" :loading="loading" size="large" class="submit-btn" @click="handleLogin">登 录</el-button>
-        </el-form>
-        <div class="toggle-link">
-          还没有账号？<el-link type="primary" @click="toggleMode">立即注册</el-link>
-        </div>
-      </div>
-    </div>
+      <!-- 登录表单 -->
+      <el-form v-if="isLogin" ref="loginFormRef" :model="loginForm" :rules="{ username: [{ required: true, message: '请输入用户名', trigger: 'blur' }], password: [{ required: true, message: '请输入密码', trigger: 'blur' }] }"
+               label-position="top" size="large" class="login-form">
+        <h3 style="margin-bottom:20px;text-align:center">用户登录</h3>
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="loginForm.username" placeholder="请输入用户名/学号" prefix-icon="User" />
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+          <el-input v-model="loginForm.password" type="password" placeholder="请输入密码" prefix-icon="Lock"
+                    @keyup.enter="handleLogin" show-password />
+        </el-form-item>
+        <el-button type="primary" :loading="loading" style="width:100%;margin-top:8px" @click="handleLogin">
+          登 录
+        </el-button>
+      </el-form>
 
-    <!-- 注册卡片 -->
-    <div class="login-card register-card" v-else>
-      <div class="card-left">
-        <div class="brand-area">
-          <div class="brand-icon">🎪</div>
-          <h2>加入我们</h2>
-          <p>开启校园活动之旅</p>
-        </div>
-      </div>
-      <div class="card-right">
-        <h2 class="form-title">创建账号</h2>
-        <p class="form-sub">填写信息完成注册</p>
-        <el-form ref="registerFormRef" :model="registerForm" :rules="registerRules" size="large" class="login-form">
-          <el-row :gutter="16">
-            <el-col :span="12">
-              <el-form-item prop="username"><el-input v-model="registerForm.username" placeholder="用户名" /></el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item prop="studentId"><el-input v-model="registerForm.studentId" placeholder="学号" /></el-form-item>
-            </el-col>
-          </el-row>
-          <el-form-item prop="realName"><el-input v-model="registerForm.realName" placeholder="真实姓名" /></el-form-item>
-          <el-row :gutter="16">
-            <el-col :span="12">
-              <el-form-item prop="password"><el-input v-model="registerForm.password" type="password" placeholder="密码（至少6位）" show-password /></el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item prop="confirmPassword"><el-input v-model="registerForm.confirmPassword" type="password" placeholder="确认密码" show-password /></el-form-item>
-            </el-col>
-          </el-row>
-          <el-form-item prop="phone"><el-input v-model="registerForm.phone" placeholder="手机号" /></el-form-item>
-          <el-form-item prop="email"><el-input v-model="registerForm.email" placeholder="邮箱（选填）" /></el-form-item>
-          <el-button type="primary" :loading="loading" size="large" class="submit-btn" @click="handleRegister">注 册</el-button>
-        </el-form>
-        <div class="toggle-link">
-          已有账号？<el-link type="primary" @click="toggleMode">去登录</el-link>
-        </div>
+      <!-- 注册表单 -->
+      <el-form v-else ref="registerFormRef" :model="registerForm" :rules="registerRules"
+               label-position="top" size="large" class="login-form">
+        <h3 style="margin-bottom:20px;text-align:center">用户注册</h3>
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="用户名" prop="username">
+              <el-input v-model="registerForm.username" placeholder="用户名" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="学号" prop="studentId">
+              <el-input v-model="registerForm.studentId" placeholder="学号" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="真实姓名" prop="realName">
+          <el-input v-model="registerForm.realName" placeholder="真实姓名" />
+        </el-form-item>
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="密码" prop="password">
+              <el-input v-model="registerForm.password" type="password" placeholder="至少6位" show-password />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="确认密码" prop="confirmPassword">
+              <el-input v-model="registerForm.confirmPassword" type="password" placeholder="再次输入密码" show-password />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="手机号" prop="phone">
+          <el-input v-model="registerForm.phone" placeholder="11位手机号" />
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="registerForm.email" placeholder="选填" />
+        </el-form-item>
+        <el-button type="primary" :loading="loading" style="width:100%;margin-top:8px" @click="handleRegister">
+          注 册
+        </el-button>
+      </el-form>
+
+      <!-- 切换按钮 -->
+      <div class="toggle-link">
+        <span v-if="isLogin">还没有账号？</span>
+        <span v-else>已有账号？</span>
+        <el-link type="primary" @click="toggleMode">
+          {{ isLogin ? '立即注册' : '去登录' }}
+        </el-link>
       </div>
     </div>
   </div>
@@ -191,61 +184,42 @@ function toggleMode() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0f1729 0%, #1a2744 50%, #1e3a5f 100%);
-  position: relative;
-  overflow: hidden;
-}
-
-/* 背景装饰圆 */
-.bg-circles { position: absolute; inset: 0; pointer-events: none; }
-.circle {
-  position: absolute; border-radius: 50%;
-  background: rgba(64,158,255,0.06);
-  animation: float 20s infinite ease-in-out;
-}
-.c1 { width: 600px; height: 600px; top: -200px; right: -150px; animation-delay: 0s; }
-.c2 { width: 400px; height: 400px; bottom: -100px; left: -100px; animation-delay: -7s; }
-.c3 { width: 300px; height: 300px; top: 40%; right: 15%; animation-delay: -14s; background: rgba(103,194,58,0.05); }
-.c4 { width: 200px; height: 200px; bottom: 20%; left: 30%; animation-delay: -3s; background: rgba(168,85,247,0.05); }
-@keyframes float {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(30px, -30px) scale(1.05); }
-  66% { transform: translate(-20px, 20px) scale(0.95); }
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .login-card {
-  position: relative; z-index: 1;
-  width: 860px; min-height: 520px;
-  background: rgba(255,255,255,0.95);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  box-shadow: 0 24px 80px rgba(0,0,0,0.3);
-  display: flex; overflow: hidden;
+  width: 480px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
 }
-.register-card { min-height: 560px; }
 
-.card-left {
-  width: 380px; flex-shrink: 0;
-  background: linear-gradient(160deg, #1d4ed8 0%, #3b82f6 30%, #6366f1 70%, #8b5cf6 100%);
-  color: #fff; padding: 48px 36px;
-  display: flex; flex-direction: column; justify-content: space-between;
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
 }
-.brand-icon { font-size: 48px; margin-bottom: 16px; }
-.brand-area h2 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
-.brand-area p { font-size: 14px; opacity: 0.8; }
-.brand-features { display: flex; flex-direction: column; gap: 14px; }
-.feat { font-size: 14px; opacity: 0.85; display: flex; align-items: center; gap: 10px; }
-.feat span { font-size: 18px; }
 
-.card-right {
-  flex: 1; padding: 48px 40px;
-  display: flex; flex-direction: column; justify-content: center;
+.login-header h1 {
+  font-size: 24px;
+  color: #303133;
+  margin-bottom: 8px;
 }
-.form-title { font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
-.form-sub { font-size: 13px; color: #94a3b8; margin-bottom: 24px; }
-.submit-btn { width: 100%; height: 44px; font-size: 16px; letter-spacing: 2px; border-radius: 8px; margin-top: 4px; }
-.toggle-link { text-align: center; margin-top: 16px; font-size: 13px; color: #94a3b8; }
 
-.login-card .el-input__wrapper { border-radius: 8px; }
-.login-card .el-form-item { margin-bottom: 18px; }
+.login-header p {
+  font-size: 13px;
+  color: #909399;
+}
+
+.login-form h3 {
+  font-size: 16px;
+  color: #606266;
+}
+
+.toggle-link {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+  color: #909399;
+}
 </style>
