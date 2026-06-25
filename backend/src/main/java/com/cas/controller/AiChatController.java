@@ -27,8 +27,8 @@ public class AiChatController {
     /** AI 生成活动描述 */
     @PostMapping("/generate-description")
     public Result<Map<String, String>> generateDescription(@RequestBody Map<String, Object> body) {
-        String title = body.get("title").toString();
-        Long categoryId = Long.valueOf(body.get("categoryId").toString());
+        String title = body.get("title") != null ? body.get("title").toString() : "";
+        Long categoryId = body.get("categoryId") != null ? Long.valueOf(body.get("categoryId").toString()) : null;
         String description = aiChatService.generateDescription(title, categoryId);
         Map<String, String> result = new java.util.HashMap<>();
         result.put("description", description);
