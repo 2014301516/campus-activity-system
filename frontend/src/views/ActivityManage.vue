@@ -222,7 +222,7 @@ async function handleCoverFile(e) {
 
 const aiGenLoading = ref(false)
 async function generateDescription() {
-  if (!form.value.title || !form.value.categoryId) return
+  if (!form.value.title) return
   aiGenLoading.value = true
   try {
     const res = await aiChatApi.generateDescription(form.value.title, form.value.categoryId || null)
