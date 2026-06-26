@@ -223,7 +223,7 @@ onMounted(() => { fetchData(); fetchMyStats() })
         <el-table-column label="操作" width="240" v-if="registrations.some(r => r.status === 'registered')">
           <template #default="{ row }">
             <div v-if="row.status === 'registered' && !isDeletedActivity(row)" class="action-buttons">
-              <el-button size="small" type="danger" @click="handleCancel(row.activityId)">取消报名</el-button>
+              <el-button v-if="!getSignInStatus(row)?.signInTime" size="small" type="danger" @click="handleCancel(row.activityId)">取消报名</el-button>
               <template v-if="canSignOut(row)">
                 <el-button size="small" :loading="signingActivityId === row.activityId"
                            @click="handleSignOut(row.activityId)">签退</el-button>
