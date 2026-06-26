@@ -483,16 +483,19 @@ onMounted(() => {
         <span class="section-subtitle">向组织者提问或与其他参与者交流</span>
       </div>
       <div class="chat-messages-box">
-        <div v-if="chatMessages.length === 0" style="text-align:center;padding:24px;color:#c0c4cc">暂无讨论，来发第一条消息吧</div>
-        <div v-for="m in chatMessages" :key="m.id" class="chat-msg-row">
-          <span class="chat-user">{{ m.userName }}</span>
-          <span class="chat-content">{{ m.content }}</span>
-          <span class="chat-time">{{ m.createdAt }}</span>
+        <div v-if="chatMessages.length === 0" class="chat-empty">💡 暂无讨论，来发第一条消息吧</div>
+        <div v-for="m in chatMessages" :key="m.id" class="chat-bubble-row" :class="{ mine: m.userId === authStore.userInfo?.userId }">
+          <div class="chat-avatar">{{ m.userName?.charAt(0) }}</div>
+          <div class="chat-bubble-wrap">
+            <div class="chat-name">{{ m.userName }}</div>
+            <div class="chat-bubble-text">{{ m.content }}</div>
+            <div class="chat-bubble-time">{{ formatTime(m.createdAt) }}</div>
+          </div>
         </div>
       </div>
       <div class="chat-send-row">
-        <el-input v-model="chatInput" type="textarea" :rows="2" placeholder="输入消息，按 Enter 发送..." @keyup.enter="sendChatMessage" :disabled="chatLoading" />
-        <el-button type="primary" :loading="chatLoading" @click="sendChatMessage">发送</el-button>
+        <el-input v-model="chatInput" placeholder="输入消息..." @keyup.enter="sendChatMessage" :disabled="chatLoading" size="default" />
+        <el-button type="primary" :loading="chatLoading" @click="sendChatMessage">发 送</el-button>
       </div>
     </div>
   </div>
@@ -770,12 +773,18 @@ onMounted(() => {
 .section-title-row { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
 .section-title-row h3 { margin: 0; font-size: 17px; }
 .section-subtitle { font-size: 13px; color: #909399; }
-.chat-messages-box { background: #fafafa; border-radius: 8px; padding: 12px 16px; max-height: 300px; overflow-y: auto; margin-bottom: 12px; border: 1px solid #ebeef5; }
-.chat-msg-row { padding: 10px 0; border-bottom: 1px solid #f0f0f0; display: flex; gap: 12px; align-items: flex-start; }
-.chat-msg-row:last-child { border-bottom: none; }
-.chat-user { font-weight: 600; font-size: 13px; color: #409eff; flex-shrink: 0; width: 72px; padding-top: 1px; }
-.chat-content { font-size: 14px; color: #303133; flex: 1; word-break: break-word; line-height: 1.6; }
-.chat-time { font-size: 12px; color: #c0c4cc; flex-shrink: 0; padding-top: 2px; white-space: nowrap; }
-.chat-send-row { display: flex; gap: 10px; align-items: flex-end; }
-.chat-send-row .el-textarea { flex: 1; }
+
+.chat-messages-box { background: #f7f8fa; border-radius: 12px; padding: 20px 16px; max-height: 400px; overflow-y: auto; margin-bottom: 16px; }
+.chat-empty { text-align: center; padding: 36px; color: #c0c4cc; font-size: 14px; }
+.chat-bubble-row { display: flex; gap: 10px; margin-bottom: 20px; }
+.chat-bubble-row.mine { flex-direction: row-reverse; }
+.chat-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; }
+.chat-bubble-row.mine .chat-avatar { background: linear-gradient(135deg, #409eff, #337ecc); }
+.chat-bubble-wrap { max-width: 420px; }
+.chat-name { font-size: 12px; color: #909399; margin-bottom: 4px; padding: 0 2px; }
+.chat-bubble-text { background: #fff; padding: 10px 14px; border-radius: 4px 14px 14px 14px; font-size: 14px; color: #303133; line-height: 1.6; word-break: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+.chat-bubble-row.mine .chat-bubble-text { background: #409eff; color: #fff; border-radius: 14px 4px 14px 14px; }
+.chat-bubble-time { font-size: 11px; color: #c0c4cc; margin-top: 4px; padding: 0 2px; }
+.chat-send-row { display: flex; gap: 10px; align-items: center; }
+.chat-send-row .el-input { flex: 1; }
 </style>
