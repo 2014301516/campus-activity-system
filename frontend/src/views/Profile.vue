@@ -141,11 +141,11 @@ onMounted(() => {
   <div class="page-card profile-page">
     <div class="profile-header">
       <div style="display:flex;align-items:center;gap:16px">
-        <div class="avatar-section">
+        <div class="avatar-section" @click="avatarFileInput.click()" title="点击更换头像">
           <img v-if="user.avatar" :src="user.avatar" class="profile-avatar-img" />
           <div v-else class="profile-avatar-placeholder">{{ (authStore.userInfo?.realName || '?')[0] }}</div>
+          <div class="avatar-hover-text">更换</div>
           <input type="file" accept="image/*" @change="handleAvatarUpload" style="display:none" ref="avatarFileInput" />
-          <el-button size="small" :loading="avatarUploading" @click="avatarFileInput.click()" style="margin-top:8px">更换头像</el-button>
         </div>
         <div>
           <h2>👤 个人中心</h2>
@@ -231,7 +231,14 @@ onMounted(() => {
   }
 }
 
-.avatar-section { display: flex; flex-direction: column; align-items: center; }
+.avatar-section { position: relative; cursor: pointer; }
+.avatar-section:hover .avatar-hover-text { opacity: 1; }
+.avatar-hover-text {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: rgba(0,0,0,0.5); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; opacity: 0; transition: opacity 0.2s;
+}
 .profile-avatar-img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 3px solid #e4e7ed; }
 .profile-avatar-placeholder {
   width: 72px; height: 72px; border-radius: 50%;
