@@ -92,9 +92,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return this.getOne(wrapper);
     }
 
+    @Autowired
+    private com.cas.util.SecurityUtil securityUtil;
+
     @Override
     public void updateProfile(User user) {
-        // 不允许修改角色和状态
+        user.setId(securityUtil.getCurrentUserId());
         user.setRole(null);
         user.setStatus(null);
         user.setPassword(null);

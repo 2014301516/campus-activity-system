@@ -39,10 +39,9 @@ async function fetchUserInfo() {
     }
     // 同步更新 store
     if (res.data) {
-      authStore.userInfo = {
-        ...authStore.userInfo,
-        realName: res.data.realName
-      }
+      const updated = { ...authStore.userInfo, realName: res.data.realName, avatar: res.data.avatar || '' }
+      authStore.userInfo = updated
+      localStorage.setItem('userInfo', JSON.stringify(updated))
     }
   } catch (e) { /* ignore */ }
   finally { loading.value = false }
@@ -61,7 +60,9 @@ async function handleAvatarUpload(e) {
       const res = await uploadApi.uploadBase64(reader.result)
       user.value.avatar = res.data.url
       await userApi.updateProfile({ realName: user.value.realName, phone: user.value.phone, email: user.value.email, avatar: res.data.url })
-      authStore.userInfo = { ...authStore.userInfo, avatar: res.data.url }
+      const updated = { ...authStore.userInfo, avatar: res.data.url }
+      authStore.userInfo = updated
+      localStorage.setItem('userInfo', JSON.stringify(updated))
       ElMessage.success('头像更新成功')
     } catch (e) { /* ignore */ }
     finally { avatarUploading.value = false }

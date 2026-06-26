@@ -130,7 +130,7 @@ function handleLogout() {
           </el-badge>
           <el-dropdown class="user-dropdown">
             <span class="user-info">
-              <el-avatar :size="32" icon="UserFilled" />
+              <el-avatar :size="32" :src="authStore.userInfo?.avatar" icon="UserFilled" />
               <span style="margin-left:8px">{{ authStore.userInfo?.realName || '用户' }}</span>
             </span>
             <template #dropdown>

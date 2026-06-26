@@ -25,7 +25,9 @@ public class ActivityChatServiceImpl extends ServiceImpl<ActivityChatMapper, Act
         chat.setUserId(userId);
         chat.setContent(content);
         this.save(chat);
-        chat.setUserName(userService.getById(userId).getRealName());
+        User u = userService.getById(userId);
+        chat.setUserName(u.getRealName());
+        chat.setAvatar(u.getAvatar());
         return chat;
     }
 
