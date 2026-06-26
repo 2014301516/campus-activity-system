@@ -40,7 +40,7 @@ const keyword = ref('')
 const categoryId = ref(null)
 const sort = ref('newest')
 const page = ref(1)
-const pageSize = ref(8)
+const pageSize = ref(16)
 
 async function fetchCategories() {
   try {
