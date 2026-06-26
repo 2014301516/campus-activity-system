@@ -485,7 +485,8 @@ onMounted(() => {
       <div class="chat-messages-box">
         <div v-if="chatMessages.length === 0" class="chat-empty">💡 暂无讨论，来发第一条消息吧</div>
         <div v-for="m in chatMessages" :key="m.id" class="chat-bubble-row" :class="{ mine: m.userId === authStore.userInfo?.userId }">
-          <div class="chat-avatar">{{ m.userName?.charAt(0) }}</div>
+          <img v-if="m.avatar" :src="m.avatar" class="chat-avatar-img" />
+            <div v-else class="chat-avatar">{{ m.userName?.charAt(0) }}</div>
           <div class="chat-bubble-wrap">
             <div class="chat-name">{{ m.userName }}</div>
             <div class="chat-bubble-text">{{ m.content }}</div>
@@ -779,6 +780,7 @@ onMounted(() => {
 .chat-bubble-row { display: flex; gap: 10px; margin-bottom: 20px; }
 .chat-bubble-row.mine { flex-direction: row-reverse; }
 .chat-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; }
+.chat-avatar-img { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; object-fit: cover; }
 .chat-bubble-row.mine .chat-avatar { background: linear-gradient(135deg, #409eff, #337ecc); }
 .chat-bubble-wrap { max-width: 420px; }
 .chat-name { font-size: 12px; color: #909399; margin-bottom: 4px; padding: 0 2px; }

@@ -20,4 +20,7 @@ public class ActivityChat {
 
     @TableField(exist = false)
     private String userName;
+
+    @TableField(exist = false)
+    private String avatar;
 }

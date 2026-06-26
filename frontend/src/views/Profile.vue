@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
-import { userApi, activityApi, registrationApi, dashboardApi } from '@/api'
+import { userApi, activityApi, registrationApi, dashboardApi, uploadApi } from '@/api'
 import { useAuthStore } from '@/store/auth'
 import { ElMessage } from 'element-plus'
 
@@ -13,7 +13,8 @@ const profileStats = ref([])
 const user = ref({
   realName: '',
   phone: '',
-  email: ''
+  email: '',
+  avatar: ''
 })
 
 const formRef = ref(null)
@@ -33,7 +34,8 @@ async function fetchUserInfo() {
     user.value = {
       realName: res.data.realName,
       phone: res.data.phone,
-      email: res.data.email || ''
+      email: res.data.email || '',
+      avatar: res.data.avatar || ''
     }
     // 同步更新 store
     if (res.data) {
@@ -44,6 +46,27 @@ async function fetchUserInfo() {
     }
   } catch (e) { /* ignore */ }
   finally { loading.value = false }
+}
+
+const avatarUploading = ref(false)
+const avatarFileInput = ref(null)
+
+async function handleAvatarUpload(e) {
+  const file = e.target.files[0]
+  if (!file || file.size > 2 * 1024 * 1024) { ElMessage.warning('图片不能超过2MB'); return }
+  avatarUploading.value = true
+  const reader = new FileReader()
+  reader.onload = async () => {
+    try {
+      const res = await uploadApi.uploadBase64(reader.result)
+      user.value.avatar = res.data.url
+      await userApi.updateProfile({ realName: user.value.realName, phone: user.value.phone, email: user.value.email, avatar: res.data.url })
+      authStore.userInfo = { ...authStore.userInfo, avatar: res.data.url }
+      ElMessage.success('头像更新成功')
+    } catch (e) { /* ignore */ }
+    finally { avatarUploading.value = false }
+  }
+  reader.readAsDataURL(file)
 }
 
 async function handleSave() {
@@ -117,8 +140,16 @@ onMounted(() => {
 <template>
   <div class="page-card profile-page">
     <div class="profile-header">
-      <div>
-        <h2>👤 个人中心</h2>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div class="avatar-section">
+          <img v-if="user.avatar" :src="user.avatar" class="profile-avatar-img" />
+          <div v-else class="profile-avatar-placeholder">{{ (authStore.userInfo?.realName || '?')[0] }}</div>
+          <input type="file" accept="image/*" @change="handleAvatarUpload" style="display:none" ref="avatarFileInput" />
+          <el-button size="small" :loading="avatarUploading" @click="avatarFileInput.click()" style="margin-top:8px">更换头像</el-button>
+        </div>
+        <div>
+          <h2>👤 个人中心</h2>
+        </div>
       </div>
       <el-tag :type="roleTagType" size="large">
         {{ roleLabel[authStore.role] || authStore.role }}
@@ -198,6 +229,15 @@ onMounted(() => {
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+.avatar-section { display: flex; flex-direction: column; align-items: center; }
+.profile-avatar-img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 3px solid #e4e7ed; }
+.profile-avatar-placeholder {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 700;
 }
 
 .notif-section { background:#fff; border-radius:8px; padding:16px; }
