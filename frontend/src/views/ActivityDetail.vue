@@ -479,7 +479,7 @@ onMounted(() => {
     <!-- 活动聊天室 -->
     <div class="page-card activity-chat-section" v-if="authStore.isLoggedIn">
       <div class="section-title-row">
-        <h3>💬 活动讨论区</h3>
+        <h3>💬 活动聊天室</h3>
         <span class="section-subtitle">向组织者提问或与其他参与者交流</span>
       </div>
       <div class="chat-messages-box">
