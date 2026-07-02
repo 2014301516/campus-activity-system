@@ -84,7 +84,23 @@ public class AiChatServiceImpl implements AiChatService {
         sb.append("【学生信息】姓名：").append(userName)
           .append("，历史报名 ").append(regCount)
           .append(" 次，签到 ").append(signCount)
-          .append(" 次，评价 ").append(reviewCount).append(" 次。\n\n");
+          .append(" 次，评价 ").append(reviewCount).append(" 次。\n");
+
+        // 用户报名的活动列表
+        List<Registration> myRegs = registrationService.lambdaQuery()
+                .eq(Registration::getUserId, userId).eq(Registration::getStatus, "registered").list();
+        if (!myRegs.isEmpty()) {
+            sb.append("你报名过的活动：\n");
+            for (Registration r : myRegs) {
+                Activity act = activityService.getById(r.getActivityId());
+                if (act != null) {
+                    sb.append("· ").append(act.getTitle()).append(" [").append(act.getStatus()).append("] ");
+                    if (r.getRegisteredAt() != null) sb.append("报名于").append(r.getRegisteredAt().toLocalDate());
+                    sb.append("\n");
+                }
+            }
+        }
+        sb.append("\n");
 
         // 当前活动上下文
         if (activityId != null) {
