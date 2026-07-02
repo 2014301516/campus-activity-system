@@ -269,6 +269,11 @@ async function handleCancelActivity(row) {
 const categories = ref([])
 const newCategoryName = ref('')
 const newCategoryDesc = ref('')
+const categoryKeyword = ref('')
+const filteredCategories = computed(() => {
+  if (!categoryKeyword.value) return categories.value
+  return categories.value.filter(c => c.name?.includes(categoryKeyword.value))
+})
 
 async function fetchCategories() {
   try {
@@ -304,6 +309,12 @@ async function deleteCategory(id) {
 const notices = ref([])
 const noticeForm = ref({ title: '', content: '' })
 const showNoticeDialog = ref(false)
+
+const noticeKeyword = ref('')
+const filteredNotices = computed(() => {
+  if (!noticeKeyword.value) return notices.value
+  return notices.value.filter(n => n.title?.includes(noticeKeyword.value))
+})
 
 async function fetchNotices() {
   try {
@@ -566,8 +577,9 @@ onMounted(() => {
 
       <!-- 活动审核 -->
       <el-tab-pane label="活动审核" name="audit">
-        <div style="margin-bottom:12px">
+        <div style="margin-bottom:12px;display:flex;gap:8px">
           <el-input v-model="auditKeyword" placeholder="搜索活动标题..." style="width:280px" clearable @input="fetchPendingActivities" />
+          <el-button type="primary" @click="fetchPendingActivities">搜索</el-button>
         </div>
         <div v-loading="auditLoading">
           <el-empty v-if="pendingActivities.length === 0" description="暂无待审核活动或取消申请" />
@@ -619,6 +631,7 @@ onMounted(() => {
       <el-tab-pane label="全部活动" name="allActivities">
         <div style="margin-bottom:12px;display:flex;gap:8px">
           <el-input v-model="allActivityKeyword" placeholder="搜索活动标题..." style="width:240px" clearable @input="handleAllActivitySearch" />
+          <el-button type="primary" @click="handleAllActivitySearch">搜索</el-button>
           <el-select v-model="allActivityStatus" placeholder="按状态筛选" clearable style="width:180px" @change="handleAllActivityStatusChange" @clear="handleAllActivityStatusChange">
             <el-option label="草稿" value="draft" />
             <el-option label="待审核" value="pending" />
@@ -676,12 +689,16 @@ onMounted(() => {
 
       <!-- 分类管理 -->
       <el-tab-pane label="分类管理" name="categories">
+        <div style="margin-bottom:12px;display:flex;gap:8px">
+          <el-input v-model="categoryKeyword" placeholder="搜索分类名称..." style="width:240px" clearable />
+          <el-button type="primary" @click="fetchCategories">搜索</el-button>
+        </div>
         <div style="margin-bottom:16px;display:flex;gap:8px">
           <el-input v-model="newCategoryName" placeholder="分类名称" style="width:180px" />
           <el-input v-model="newCategoryDesc" placeholder="分类描述" style="width:240px" />
           <el-button type="primary" @click="addCategory">添加分类</el-button>
         </div>
-        <el-table :data="categories" stripe>
+        <el-table :data="filteredCategories" stripe>
           <el-table-column label="ID" prop="id" width="80" />
           <el-table-column label="名称" prop="name" width="160" />
           <el-table-column label="描述" prop="description" />
@@ -695,12 +712,16 @@ onMounted(() => {
 
       <!-- 公告管理 -->
       <el-tab-pane label="公告管理" name="notices">
+        <div style="margin-bottom:12px;display:flex;gap:8px">
+          <el-input v-model="noticeKeyword" placeholder="搜索公告标题..." style="width:240px" clearable />
+          <el-button type="primary" @click="fetchNotices">搜索</el-button>
+        </div>
         <div style="margin-bottom:16px">
           <el-button type="primary" @click="showNoticeDialog = true">
             <el-icon><Plus /></el-icon> 发布公告
           </el-button>
         </div>
-        <el-table :data="notices" stripe>
+        <el-table :data="filteredNotices" stripe>
           <el-table-column label="标题" prop="title" min-width="200" />
           <el-table-column label="内容" prop="content" min-width="300">
             <template #default="{ row }">{{ row.content?.length > 100 ? row.content.substring(0, 100) + '...' : row.content }}</template>
