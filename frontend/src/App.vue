@@ -87,8 +87,10 @@ async function sendChat(question) {
   const history = chatMessages.value.length > 1 ? chatMessages.value.slice(0, -1) : []
   chatLoading.value = true
   try {
-    const page = route.name ? route.name.charAt(0).toLowerCase() + route.name.slice(1) : 'home'
-    const res = await aiChatApi.ask(q, null, history)
+    const pageNameMap = { Home:'home', ActivityDetail:'activity', MyActivities:'my-activities', ActivityManage:'manage', Admin:'admin', Notifications:'notifications', Profile:'profile' }
+    const pageName = pageNameMap[route.name] || 'home'
+    const activityId = route.params?.id || null
+    const res = await aiChatApi.ask(q, activityId, history, pageName)
     chatMessages.value.push({ role: 'ai', content: res.data.answer, source: res.data.source })
   } catch (e) {
     chatMessages.value.push({ role: 'ai', content: '抱歉，AI 暂时无法回复。', source: 'error' })

@@ -134,6 +134,16 @@ public class AiChatServiceImpl implements AiChatService {
             } else if ("my-activities".equals(page)) {
                 long myReg = registrationService.lambdaQuery().eq(Registration::getUserId, userId).eq(Registration::getStatus, "registered").count();
                 sb.append("你已报名").append(myReg).append("个活动\n");
+            } else if ("activity".equals(page) && activityId != null) {
+                Activity detail = activityService.getById(activityId);
+                if (detail != null) {
+                    String cat = categoryService.getById(detail.getCategoryId()) != null ? categoryService.getById(detail.getCategoryId()).getName() : "未知";
+                    sb.append("正在查看活动：").append(detail.getTitle())
+                      .append(" [").append(detail.getStatus()).append("] ")
+                      .append("分类：").append(cat).append(" ")
+                      .append("时间：").append(detail.getStartTime().format(DTF)).append("~").append(detail.getEndTime().format(DTF)).append(" ")
+                      .append("报名：").append(detail.getCurrentParticipants()).append("/").append(detail.getMaxParticipants()).append("\n");
+                }
             }
         }
 
