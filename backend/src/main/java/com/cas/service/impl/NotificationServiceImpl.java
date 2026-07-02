@@ -57,4 +57,21 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
                 .eq(Notification::getUserId, userId)
                 .update();
     }
+
+    @Override
+    public void deleteNotification(Long notificationId, Long userId) {
+        this.lambdaUpdate()
+                .eq(Notification::getId, notificationId)
+                .eq(Notification::getUserId, userId)
+                .remove();
+    }
+
+    @Override
+    public List<Notification> searchNotifications(Long userId, String keyword) {
+        return this.lambdaQuery()
+                .eq(Notification::getUserId, userId)
+                .and(w -> w.like(Notification::getTitle, keyword).or().like(Notification::getContent, keyword))
+                .orderByDesc(Notification::getCreatedAt)
+                .list();
+    }
 }

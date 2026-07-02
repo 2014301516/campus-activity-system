@@ -21,4 +21,10 @@ public interface NotificationService extends IService<Notification> {
 
     /** 标记单条已读 */
     void markOneRead(Long notificationId, Long userId);
+
+    /** 删除通知 */
+    void deleteNotification(Long notificationId, Long userId);
+
+    /** 搜索通知 */
+    List<Notification> searchNotifications(Long userId, String keyword);
 }

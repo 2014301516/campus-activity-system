@@ -1,10 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { notificationApi } from '@/api'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const loading = ref(false)
 const notifications = ref([])
+const keyword = ref('')
 
 function typeLabel(type) {
   const map = {
@@ -17,8 +18,12 @@ function typeLabel(type) {
 
 async function fetchNotifications() {
   loading.value = true
-  try { const res = await notificationApi.getMyNotifications(); notifications.value = res.data || [] } catch (e) {}
-  finally { loading.value = false }
+  try {
+    const res = keyword.value
+      ? await notificationApi.searchNotifications(keyword.value)
+      : await notificationApi.getMyNotifications()
+    notifications.value = res.data || []
+  } catch (e) {} finally { loading.value = false }
 }
 
 async function markAllRead() {
@@ -31,9 +36,15 @@ async function markAllRead() {
 }
 
 async function markOneRead(n) {
+  try { await notificationApi.markOneRead(n.id); n.isRead = 1; window.dispatchEvent(new Event('notification-read')) } catch (e) {}
+}
+
+async function handleDelete(n) {
   try {
-    await notificationApi.markOneRead(n.id)
-    n.isRead = 1
+    await ElMessageBox.confirm('确定删除这条消息吗？', '删除确认', { type: 'warning' })
+    await notificationApi.deleteNotification(n.id)
+    notifications.value = notifications.value.filter(item => item.id !== n.id)
+    ElMessage.success('已删除')
     window.dispatchEvent(new Event('notification-read'))
   } catch (e) {}
 }
@@ -43,9 +54,14 @@ onMounted(fetchNotifications)
 
 <template>
   <div class="page-card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <h2>🔔 消息通知</h2>
       <el-button v-if="notifications.some(n=>n.isRead===0)" type="primary" size="small" @click="markAllRead">全部已读</el-button>
+    </div>
+
+    <div style="margin-bottom:16px;display:flex;gap:8px">
+      <el-input v-model="keyword" placeholder="搜索消息..." style="width:280px" clearable @clear="fetchNotifications" @keyup.enter="fetchNotifications" />
+      <el-button type="primary" @click="fetchNotifications">搜索</el-button>
     </div>
 
     <div v-loading="loading">
@@ -65,6 +81,7 @@ onMounted(fetchNotifications)
             <div style="display:flex;align-items:center;gap:12px">
               <span class="notif-time">{{ n.createdAt }}</span>
               <el-button v-if="n.isRead === 0" size="small" text type="primary" @click="markOneRead(n)">标为已读</el-button>
+              <el-button size="small" text type="danger" @click="handleDelete(n)">删除</el-button>
             </div>
           </div>
         </div>

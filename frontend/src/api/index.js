@@ -65,7 +65,9 @@ export const notificationApi = {
   getMyNotifications: () => request.get('/notifications'),
   getUnreadCount: () => request.get('/notifications/unread-count'),
   markAllRead: () => request.put('/notifications/read-all'),
-  markOneRead: (id) => request.put('/notifications/' + id + '/read')
+  markOneRead: (id) => request.put('/notifications/' + id + '/read'),
+  deleteNotification: (id) => request.delete('/notifications/' + id),
+  searchNotifications: (keyword) => request.get('/notifications/search', { params: { keyword } })
 }
 
 // ==================== AI 推荐 ====================

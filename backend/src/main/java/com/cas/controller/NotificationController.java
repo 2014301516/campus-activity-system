@@ -51,4 +51,17 @@ public class NotificationController {
         notificationService.markOneRead(id, userId);
         return Result.success("已标为已读");
     }
+
+    @DeleteMapping("/notifications/{id}")
+    public Result<?> deleteNotification(@PathVariable Long id) {
+        Long userId = securityUtil.getCurrentUserId();
+        notificationService.deleteNotification(id, userId);
+        return Result.success("已删除");
+    }
+
+    @GetMapping("/notifications/search")
+    public Result<List<Notification>> searchNotifications(@RequestParam String keyword) {
+        Long userId = securityUtil.getCurrentUserId();
+        return Result.success(notificationService.searchNotifications(userId, keyword));
+    }
 }
