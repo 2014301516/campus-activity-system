@@ -161,6 +161,7 @@ const chatInput = ref('')
 const chatMessages = ref([])
 const chatLoading = ref(false)
 const chatVisible = ref(false)
+const chatBodyEl = ref(null)
 
 const quickQuestions = ['最近有什么适合我的活动？', '哪个活动最热门？', '周末有什么安排？', '帮我推荐一个学术类活动']
 
@@ -176,8 +177,9 @@ async function sendChat(question) {
   if (!q || chatLoading.value) return
   chatMessages.value.push({ role: 'user', content: q })
   chatInput.value = ''
-  const history = chatMessages.value.length > 1 ? chatMessages.value.slice(0, -1) : []
   chatLoading.value = true
+  const history = chatMessages.value.length > 1 ? chatMessages.value.slice(0, -1) : []
+  await nextTick(); if (chatBodyEl.value) chatBodyEl.value.scrollTop = chatBodyEl.value.scrollHeight
   try {
     const res = await aiChatApi.ask(q, null, history)
     chatMessages.value.push({ role: 'ai', content: res.data.answer, source: res.data.source })
@@ -185,6 +187,7 @@ async function sendChat(question) {
     chatMessages.value.push({ role: 'ai', content: '抱歉，AI 暂时无法回复，请稍后再试。', source: 'error' })
   } finally {
     chatLoading.value = false
+    await nextTick(); if (chatBodyEl.value) chatBodyEl.value.scrollTop = chatBodyEl.value.scrollHeight
     if (chatMessages.value.length > 10) chatMessages.value = chatMessages.value.slice(-10)
   }
 }
@@ -711,7 +714,7 @@ onBeforeUnmount(() => {
         <span>🤖 AI 活动助手</span>
         <span class="ai-chat-close" @click="chatVisible = false">✕</span>
       </div>
-      <div class="ai-chat-body">
+      <div class="ai-chat-body" ref="chatBodyEl">
         <div v-if="chatMessages.length === 0" class="ai-chat-hint">
           <p>👋 你好！我是校园活动 AI 助手</p>
           <p style="font-size:12px;color:#909399">可以问我：最近有什么活动？哪个适合我？</p>

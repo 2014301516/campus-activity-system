@@ -1,7 +1,7 @@
 <script setup>
 import { useAuthStore } from './store/auth'
 import { useRouter, useRoute } from 'vue-router'
-import { computed, ref, onMounted, watch } from 'vue'
+import { computed, ref, onMounted, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Bell } from '@element-plus/icons-vue'
 import { notificationApi, aiChatApi } from './api'
@@ -55,6 +55,13 @@ const chatVisible = ref(false)
 const chatInput = ref('')
 const chatMessages = ref([])
 const chatLoading = ref(false)
+const chatBodyRef = ref(null)
+
+function scrollChatBottom() {
+  nextTick(() => {
+    if (chatBodyRef.value) chatBodyRef.value.scrollTop = chatBodyRef.value.scrollHeight
+  })
+}
 const quickQuestions = computed(() => {
   const r = authStore.role
   const p = route.path
@@ -84,18 +91,22 @@ async function sendChat(question) {
   if (!q || chatLoading.value) return
   chatMessages.value.push({ role: 'user', content: q })
   chatInput.value = ''
+  scrollChatBottom()
   const history = chatMessages.value.length > 1 ? chatMessages.value.slice(0, -1) : []
   chatLoading.value = true
+  scrollChatBottom()
   try {
     const pageNameMap = { Home:'home', ActivityDetail:'activity', MyActivities:'my-activities', ActivityManage:'manage', Admin:'admin', Notifications:'notifications', Profile:'profile' }
     const pageName = pageNameMap[route.name] || 'home'
     const activityId = route.params?.id || null
     const res = await aiChatApi.ask(q, activityId, history, pageName)
     chatMessages.value.push({ role: 'ai', content: res.data.answer, source: res.data.source })
+    scrollChatBottom()
   } catch (e) {
     chatMessages.value.push({ role: 'ai', content: '抱歉，AI 暂时无法回复。', source: 'error' })
   } finally {
     chatLoading.value = false
+    scrollChatBottom()
     if (chatMessages.value.length > 10) chatMessages.value = chatMessages.value.slice(-10)
   }
 }
@@ -170,7 +181,7 @@ function handleLogout() {
           <span>🤖 AI 活动助手</span>
           <span class="ai-chat-close" @click="chatVisible = false">✕</span>
         </div>
-        <div class="ai-chat-body">
+        <div class="ai-chat-body" ref="chatBodyRef">
           <div v-if="chatMessages.length === 0" class="ai-chat-hint">
             <p>👋 你好！我是校园活动 AI 助手</p>
             <div class="quick-qs" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
