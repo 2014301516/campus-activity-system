@@ -29,7 +29,8 @@ public class AiChatController {
     public Result<Map<String, String>> generateDescription(@RequestBody Map<String, Object> body) {
         String title = body.get("title") != null ? body.get("title").toString() : "";
         Long categoryId = body.get("categoryId") != null ? Long.valueOf(body.get("categoryId").toString()) : null;
-        String description = aiChatService.generateDescription(title, categoryId);
+        String hint = body.get("hint") != null ? body.get("hint").toString() : "";
+        String description = aiChatService.generateDescription(title, categoryId, hint);
         Map<String, String> result = new java.util.HashMap<>();
         result.put("description", description);
         return Result.success(result);

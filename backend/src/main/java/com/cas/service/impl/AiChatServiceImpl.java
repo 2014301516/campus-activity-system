@@ -210,13 +210,14 @@ public class AiChatServiceImpl implements AiChatService {
     }
 
     @Override
-    public String generateDescription(String title, Long categoryId) {
+    public String generateDescription(String title, Long categoryId, String hint) {
         if (!StringUtils.hasText(deepSeek.getApiKey())) {
             return "AI 功能尚未配置 API Key，请手动填写活动描述。";
         }
         String catName = categoryId != null ? categoryService.getById(categoryId).getName() : "校园活动";
+        String hintText = StringUtils.hasText(hint) ? "\n关键词提示：" + hint : "";
         String prompt = "为校园活动「" + title + "」写一段活动描述（分类：" + catName
-                + "）。100-200字，吸引学生参加，不要用Markdown格式。";
+                + "）。100-200字，吸引学生参加。" + hintText + "不要用Markdown格式。";
 
         try {
             List<Map<String, String>> msgs = new ArrayList<>();

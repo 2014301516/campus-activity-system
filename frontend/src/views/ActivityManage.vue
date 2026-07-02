@@ -221,11 +221,12 @@ async function handleCoverFile(e) {
 }
 
 const aiGenLoading = ref(false)
+const aiHint = ref('')
 async function generateDescription() {
   if (!form.value.title) return
   aiGenLoading.value = true
   try {
-    const res = await aiChatApi.generateDescription(form.value.title, form.value.categoryId || null)
+    const res = await aiChatApi.generateDescription(form.value.title, form.value.categoryId || null, aiHint.value)
     form.value.description = res.data.description
     await nextTick()
     formRef.value?.clearValidate('description')
@@ -375,9 +376,12 @@ onMounted(() => {
         </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input v-model="form.description" type="textarea" :rows="4" placeholder="活动详细描述" />
-          <el-button size="small" native-type="button" style="margin-top:6px" :disabled="!form.title" :loading="aiGenLoading" @click="generateDescription">
-            ✨ AI 生成描述
-          </el-button>
+          <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
+            <el-input v-model="aiHint" placeholder="关键词提示，如：适合零基础、突出实践环节" size="small" style="flex:1" clearable />
+            <el-button size="small" native-type="button" :disabled="!form.title" :loading="aiGenLoading" @click="generateDescription">
+              ✨ AI 生成
+            </el-button>
+          </div>
         </el-form-item>
         <el-form-item label="封面图">
           <el-input v-model="form.coverImage" placeholder="输入URL或点击上传" clearable />

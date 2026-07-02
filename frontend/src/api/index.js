@@ -75,7 +75,7 @@ export const recommendationApi = {
 
 export const aiChatApi = {
   ask: (question, activityId, messages, page) => request.post('/ai/ask', { question, activityId, messages, page }),
-  generateDescription: (title, categoryId) => request.post('/ai/generate-description', { title, categoryId }),
+  generateDescription: (title, categoryId, hint) => request.post('/ai/generate-description', { title, categoryId, hint }),
   getAuditSuggestion: (activityId) => request.get('/ai/audit-suggestion', { params: { activityId } })
 }
 
