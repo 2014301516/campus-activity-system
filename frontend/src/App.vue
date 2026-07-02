@@ -185,7 +185,7 @@ function handleLogout() {
         </div>
         <div class="ai-chat-input">
           <input v-model="chatInput" placeholder="问 AI..." @keyup.enter="sendChat()" :disabled="chatLoading" />
-          <button @click="sendChat()" :disabled="chatLoading">发送</button>
+          <button @click="sendChat()" :disabled="chatLoading" :style="{opacity:chatLoading?0.6:1,cursor:chatLoading?'not-allowed':'pointer'}">发送</button>
         </div>
       </div>
     </template>

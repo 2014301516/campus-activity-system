@@ -571,7 +571,7 @@ onBeforeUnmount(() => {
         </div>
         <div class="chat-input-row">
           <el-input v-model="chatInput" placeholder="问 AI 关于活动的问题..." @keyup.enter="sendChat()" :disabled="chatLoading" />
-          <el-button type="primary" :loading="chatLoading" @click="sendChat()" :disabled="!chatInput.trim()">发送</el-button>
+          <el-button type="primary" @click="sendChat()" :disabled="!chatInput.trim() || chatLoading">发送</el-button>
         </div>
       </div>
     </section>
@@ -724,7 +724,7 @@ onBeforeUnmount(() => {
       </div>
       <div class="ai-chat-input">
         <input v-model="chatInput" placeholder="问 AI..." @keyup.enter="sendChat(); chatVisible=true" :disabled="chatLoading" />
-        <button @click="sendChat(); chatVisible=true" :disabled="chatLoading">发送</button>
+        <button @click="sendChat(); chatVisible=true" :disabled="chatLoading" style="opacity:0.6;cursor:not-allowed">发送</button>
       </div>
     </div>
   </div>
