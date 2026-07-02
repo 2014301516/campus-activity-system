@@ -167,7 +167,7 @@ public class AiChatServiceImpl implements AiChatService {
     }
 
     private String buildSystemPrompt(String role, String page) {
-        String base = "你是校园活动管理系统助手。回答简短（200字内），可使用Markdown。";
+        String base = "你是校园活动管理系统助手。回答简短（200字内），可使用Markdown。注意：回答中的活动状态必须用中文——approved=报名中、ongoing=进行中、pending=待审核、rejected=已驳回、ended=已结束、cancelled=已取消、cancel_pending=取消待审核、draft=草稿。";
         if ("student".equals(role)) {
             if ("my-activities".equals(page)) return base + "用户是学生，正在查看自己的报名记录。帮助查看报名状态、签到时间、取消报名等问题。";
             if ("home".equals(page)) return base + "用户是学生，正在浏览首页。帮助推荐活动、搜索活动、介绍活动详情。";
