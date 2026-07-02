@@ -518,7 +518,7 @@ onMounted(() => {
         <el-table :data="users" stripe v-loading="userLoading">
           <el-table-column label="用户名" prop="username" width="120" />
           <el-table-column label="姓名" prop="realName" width="100" />
-          <el-table-column label="学号" prop="studentId" width="120" />
+          <el-table-column label="学号/工号" prop="studentId" width="120" />
           <el-table-column label="手机号" prop="phone" width="130" />
           <el-table-column label="角色" width="100">
             <template #default="{ row }">
