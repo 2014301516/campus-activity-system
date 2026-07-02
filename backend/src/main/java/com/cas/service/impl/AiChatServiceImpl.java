@@ -151,7 +151,7 @@ public class AiChatServiceImpl implements AiChatService {
         List<Activity> available = activityService.lambdaQuery()
                 .in(Activity::getStatus, "approved", "ongoing")
                 .orderByAsc(Activity::getStartTime)
-                .list().stream().limit(20).collect(Collectors.toList());
+                .list().stream().limit(50).collect(Collectors.toList());
 
         sb.append("【当前可报名活动列表】\n");
         for (Activity a : available) {
