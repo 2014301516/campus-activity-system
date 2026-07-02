@@ -94,6 +94,7 @@ async function sendChat(question) {
   scrollChatBottom()
   const history = chatMessages.value.length > 1 ? chatMessages.value.slice(0, -1) : []
   chatLoading.value = true
+  await nextTick()
   scrollChatBottom()
   try {
     const pageNameMap = { Home:'home', ActivityDetail:'activity', MyActivities:'my-activities', ActivityManage:'manage', Admin:'admin', Notifications:'notifications', Profile:'profile' }

@@ -178,8 +178,9 @@ async function sendChat(question) {
   chatMessages.value.push({ role: 'user', content: q })
   chatInput.value = ''
   chatLoading.value = true
+  await nextTick()
   const history = chatMessages.value.length > 1 ? chatMessages.value.slice(0, -1) : []
-  await nextTick(); if (chatBodyEl.value) chatBodyEl.value.scrollTop = chatBodyEl.value.scrollHeight
+  if (chatBodyEl.value) chatBodyEl.value.scrollTop = chatBodyEl.value.scrollHeight
   try {
     const res = await aiChatApi.ask(q, null, history)
     chatMessages.value.push({ role: 'ai', content: res.data.answer, source: res.data.source })
