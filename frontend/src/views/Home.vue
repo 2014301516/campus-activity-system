@@ -487,10 +487,21 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <div v-loading="aiLoading">
+      <div>
+        <!-- 骨架屏加载 -->
+        <div v-if="aiLoading" class="ai-grid">
+          <div v-for="i in 4" :key="'s'+i" class="ai-card ai-skeleton">
+            <div class="skeleton-line skeleton-title"></div>
+            <div class="skeleton-line skeleton-meta"></div>
+            <div class="skeleton-line skeleton-text"></div>
+            <div class="skeleton-line skeleton-text short"></div>
+            <div class="skeleton-badge"></div>
+          </div>
+        </div>
+
         <el-empty v-if="!aiLoading && aiRecommendations.length === 0" description="当前暂无可推荐活动" />
 
-        <div v-else class="ai-grid">
+        <div v-if="!aiLoading && aiRecommendations.length > 0" class="ai-grid">
           <div
             v-for="activity in aiRecommendations"
             :key="activity.id"
@@ -1202,6 +1213,24 @@ onBeforeUnmount(() => {
   gap: 20px;
   margin-bottom: 24px;
 }
+
+/* AI骨架屏加载 */
+.ai-skeleton {
+  pointer-events: none; padding: 20px;
+  background: linear-gradient(110deg, #eceff4 30%, #f8f9fc 50%, #eceff4 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skeleton-line { height: 14px; border-radius: 6px; background: #dce1e8; margin-bottom: 12px; }
+.skeleton-title { width: 70%; height: 18px; }
+.skeleton-meta { width: 50%; }
+.skeleton-text { width: 90%; }
+.skeleton-text.short { width: 60%; }
+.skeleton-badge { width: 60px; height: 22px; border-radius: 11px; background: #dce1e8; margin-top: 8px; }
 
 .ai-grid {
   display: grid;
