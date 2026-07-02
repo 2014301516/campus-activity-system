@@ -137,13 +137,19 @@ async function toggleUserStatus(user) {
 const pendingActivities = ref([])
 const auditLoading = ref(false)
 
+const auditKeyword = ref('')
+
 async function fetchPendingActivities() {
   auditLoading.value = true
   try {
     const res = await activityApi.getList({ includeAll: true, size: 100 })
-    pendingActivities.value = (res.data.records || []).filter(item =>
+    let list = (res.data.records || []).filter(item =>
       item.status === 'pending' || item.status === 'cancel_pending'
     )
+    if (auditKeyword.value) {
+      list = list.filter(item => item.title.includes(auditKeyword.value))
+    }
+    pendingActivities.value = list
   } catch (e) { /* ignore */ }
   finally { auditLoading.value = false }
 }
@@ -201,6 +207,7 @@ async function handleAudit(row, status) {
 const allActivities = ref([])
 const allActivityLoading = ref(false)
 const allActivityStatus = ref('')
+const allActivityKeyword = ref('')
 const allActivityPage = ref(1)
 const allActivityPageSize = ref(10)
 const allActivityTotal = ref(0)
@@ -214,6 +221,7 @@ async function fetchAllActivities() {
       includeAll: true
     }
     if (allActivityStatus.value) params.status = allActivityStatus.value
+    if (allActivityKeyword.value) params.keyword = allActivityKeyword.value
     const res = await activityApi.getList(params)
     allActivities.value = res.data.records || []
     allActivityTotal.value = res.data.total || 0
@@ -222,6 +230,10 @@ async function fetchAllActivities() {
 }
 
 function handleAllActivityStatusChange() {
+  allActivityPage.value = 1
+  fetchAllActivities()
+}
+function handleAllActivitySearch() {
   allActivityPage.value = 1
   fetchAllActivities()
 }
@@ -554,6 +566,9 @@ onMounted(() => {
 
       <!-- 活动审核 -->
       <el-tab-pane label="活动审核" name="audit">
+        <div style="margin-bottom:12px">
+          <el-input v-model="auditKeyword" placeholder="搜索活动标题..." style="width:280px" clearable @input="fetchPendingActivities" />
+        </div>
         <div v-loading="auditLoading">
           <el-empty v-if="pendingActivities.length === 0" description="暂无待审核活动或取消申请" />
           <el-table v-else :data="pendingActivities" stripe>
@@ -602,7 +617,8 @@ onMounted(() => {
 
       <!-- 全部活动 -->
       <el-tab-pane label="全部活动" name="allActivities">
-        <div style="margin-bottom:12px">
+        <div style="margin-bottom:12px;display:flex;gap:8px">
+          <el-input v-model="allActivityKeyword" placeholder="搜索活动标题..." style="width:240px" clearable @input="handleAllActivitySearch" />
           <el-select v-model="allActivityStatus" placeholder="按状态筛选" clearable style="width:180px" @change="handleAllActivityStatusChange" @clear="handleAllActivityStatusChange">
             <el-option label="草稿" value="draft" />
             <el-option label="待审核" value="pending" />
